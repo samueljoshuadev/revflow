@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f8fc;
+  --foreground: #101326;
+  --panel: #ffffff;
+  --panel-muted: #fafaff;
+  --border: #e5e7f0;
+  --muted: #68728a;
+  --brand: #6d5dfc;
+  --brand-dark: #5542dc;
+  --brand-soft: #f0edff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-panel-muted: var(--panel-muted);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-soft: var(--brand-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(109, 93, 252, 0.065), transparent 28rem),
+    linear-gradient(180deg, #fbfbfe 0%, var(--background) 52%, #f5f6fb 100%);
+}
+
+a,
+button {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-color: color-mix(in srgb, var(--brand) 60%, transparent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #ddd8ff;
+  color: #251b6b;
+}
+
+::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #c9cdd8;
+  background-clip: padding-box;
+}
+
+.surface-lift {
+  box-shadow: 0 18px 48px rgba(25, 28, 57, 0.06);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 360ms ease-out both;
+}
