@@ -18,16 +18,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EventTimeline } from "@/components/leads/event-timeline";
+import { LeadRealEstatePanel } from "@/components/real-estate/lead-real-estate-panel";
 import { Textarea } from "@/components/ui/field";
 import { cn, formatCurrency, initials } from "@/lib/utils";
 import { getLeadDetail } from "@/services/leads";
+import { getLeadRealEstateData } from "@/services/real-estate-matching";
 import { requireWorkspace } from "@/services/workspace";
 
 import {
   addLeadNote,
   deleteLead,
   qualifyLead,
+  recommendProperty,
+  saveRealEstateLeadProfile,
   setLeadArchived,
+  updatePropertyMatchStatus,
 } from "../actions";
 
 type LeadPageProps = {
@@ -61,6 +66,10 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
   const { organization } = await requireWorkspace();
   const lead = await getLeadDetail(organization.id, id);
   if (!lead) notFound();
+  const realEstateData =
+    organization.vertical === "real_estate"
+      ? await getLeadRealEstateData(organization.id, lead.id)
+      : null;
 
   return (
     <div className="mx-auto max-w-[1380px] p-4 sm:p-6 lg:p-8">
@@ -82,7 +91,7 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
 
       <header className="mt-5 flex flex-col gap-5 rounded-xl border border-gray-200/80 bg-white p-5 shadow-xs sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div className="flex min-w-0 items-start gap-4">
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-semibold text-violet-700">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-sm font-semibold text-brand-dark">
             {initials(lead.name)}
           </span>
           <div className="min-w-0">
@@ -165,6 +174,15 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_350px]">
         <div className="space-y-5">
+          {realEstateData && (
+            <LeadRealEstatePanel
+              leadId={lead.id}
+              data={realEstateData}
+              saveProfileAction={saveRealEstateLeadProfile}
+              recommendPropertyAction={recommendProperty}
+              updateMatchStatusAction={updatePropertyMatchStatus}
+            />
+          )}
           <section className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-xs sm:p-6">
             <div className="flex items-center gap-2">
               <Sparkles className="size-4 text-brand" />
@@ -176,18 +194,18 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
               {lead.summary ||
                 "Ainda nÃ£o hÃ¡ um resumo registrado para este lead."}
             </p>
-            <div className="mt-5 flex items-start gap-3 rounded-lg bg-violet-50/70 p-3.5">
-              <CalendarClock className="mt-0.5 size-4 shrink-0 text-violet-600" />
+            <div className="mt-5 flex items-start gap-3 rounded-lg bg-brand-soft/70 p-3.5">
+              <CalendarClock className="mt-0.5 size-4 shrink-0 text-brand-dark" />
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold tracking-wide text-violet-500 uppercase">
+                <p className="text-[10px] font-semibold tracking-wide text-brand-dark uppercase">
                   PrÃ³xima aÃ§Ã£o
                 </p>
-                <p className="mt-1 text-xs font-medium text-violet-900">
+                <p className="mt-1 text-xs font-medium text-gray-900">
                   {lead.next_action || "Defina a prÃ³xima aÃ§Ã£o comercial"}
                 </p>
                 <Link
                   href={`/calendar?leadId=${lead.id}`}
-                  className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-xs font-medium text-white hover:bg-violet-700"
+                  className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg bg-gray-950 px-3 text-xs font-medium text-white hover:bg-gray-800"
                 >
                   <CalendarClock className="size-3.5" /> Agendar reunião
                 </Link>
@@ -303,7 +321,7 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
             </p>
             <form action={qualifyLead} className="mt-4">
               <input type="hidden" name="leadId" value={lead.id} />
-              <button className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 text-xs font-medium text-white hover:bg-violet-700">
+              <button className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-gray-950 px-3 text-xs font-medium text-white hover:bg-gray-800">
                 <Sparkles className="size-3.5" /> Qualificar com IA
               </button>
             </form>

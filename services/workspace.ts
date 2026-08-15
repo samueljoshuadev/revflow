@@ -11,3 +11,11 @@ export async function requireWorkspace() {
   if (!organization) redirect("/onboarding");
   return { user, organization };
 }
+
+export async function requireRealEstateWorkspace() {
+  const workspace = await requireWorkspace();
+  if (workspace.organization.vertical !== "real_estate") {
+    redirect("/dashboard");
+  }
+  return workspace;
+}

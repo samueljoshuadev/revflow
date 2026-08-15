@@ -103,3 +103,20 @@ textarea {
 .animate-fade-up {
   animation: fade-up 360ms ease-out both;
 }
+
+[data-vertical="real_estate"] {
+  --background: #fffcf4;
+  --foreground: #172033;
+  --panel-muted: #fffaf0;
+  --border: #eee3c9;
+  --muted: #6f685a;
+  --brand: #e8a51b;
+  --brand-dark: #c77b08;
+  --brand-soft: #fff6d8;
+  color: var(--foreground);
+}
+
+[data-vertical="real_estate"] ::selection {
+  background: #ffe8aa;
+  color: #594009;
+}

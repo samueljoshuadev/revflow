@@ -1,5 +1,9 @@
 # Arquitetura
 
+## Verticais por organização
+
+O RevFlow permanece um único SaaS multi-tenant. `organizations.vertical` seleciona `agency` ou `real_estate`; o layout protegido recebe a vertical da organização ativa e aplica navegação, logo e variáveis CSS sem duplicar autenticação, banco ou componentes estruturais. A vertical imobiliária é documentada em `docs/real-estate.md`.
+
 ## Visão geral
 
 O Orbit CRM usa Next.js App Router na Vercel e Supabase como fonte primária de dados, autenticação e autorização. Componentes de servidor leem dados diretamente com a sessão do usuário; componentes de cliente ficam restritos às interações que exigem estado local, como o Kanban. Toda mutação é validada no servidor e novamente protegida por constraints/RLS no PostgreSQL.

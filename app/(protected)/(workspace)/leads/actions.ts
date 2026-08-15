@@ -10,6 +10,7 @@ import {
   qualifyLeadWithOpenAi,
 } from "@/services/ai/openai";
 import { requireWorkspace } from "@/services/workspace";
+import { getDeterministicMatches } from "@/services/real-estate-matching";
 
 const optionalText = (max: number) =>
   z.preprocess(
@@ -277,4 +278,148 @@ export async function qualifyLead(formData: FormData) {
   revalidatePath("/leads");
   revalidatePath("/pipeline");
   redirect(`/leads/${leadId.data}?message=${encodeURIComponent("Lead qualificado com IA.")}`);
+}
+
+const nullableProfileNumber = (schema: z.ZodNumber) =>
+  z.preprocess(
+    (value) => (value === "" || value === null ? null : value),
+    z.coerce.number().pipe(schema).nullable(),
+  );
+
+const realEstateProfileSchema = z.object({
+  leadId: z.uuid(),
+  budgetMin: nullableProfileNumber(z.number().min(0).max(999_999_999_999)),
+  budgetMax: nullableProfileNumber(z.number().min(0).max(999_999_999_999)),
+  preferredCity: optionalText(120),
+  preferredNeighborhood: optionalText(120),
+  propertyType: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.enum(["apartment", "house", "commercial", "land", "rural", "other"]).nullable(),
+  ),
+  purpose: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.enum(["sale", "rent"]).nullable(),
+  ),
+  minimumBedrooms: nullableProfileNumber(z.number().int().min(0).max(100)),
+  paymentMethod: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.enum(["cash", "financing", "consortium", "exchange", "other"]).nullable(),
+  ),
+  availableDownPayment: nullableProfileNumber(z.number().min(0).max(999_999_999_999)),
+  urgency: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.enum(["low", "medium", "high", "immediate"]).nullable(),
+  ),
+  purchaseDeadline: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.string().date().nullable(),
+  ),
+}).refine(
+  (data) => data.budgetMin === null || data.budgetMax === null || data.budgetMax >= data.budgetMin,
+  { message: "Faixa de orçamento inválida" },
+);
+
+export async function saveRealEstateLeadProfile(formData: FormData) {
+  const { user, organization } = await requireWorkspace();
+  if (organization.vertical !== "real_estate") return;
+  const parsed = realEstateProfileSchema.safeParse({
+    leadId: formData.get("leadId"),
+    budgetMin: formData.get("budgetMin"),
+    budgetMax: formData.get("budgetMax"),
+    preferredCity: formData.get("preferredCity"),
+    preferredNeighborhood: formData.get("preferredNeighborhood"),
+    propertyType: formData.get("propertyType"),
+    purpose: formData.get("purpose"),
+    minimumBedrooms: formData.get("minimumBedrooms"),
+    paymentMethod: formData.get("paymentMethod"),
+    availableDownPayment: formData.get("availableDownPayment"),
+    urgency: formData.get("urgency"),
+    purchaseDeadline: formData.get("purchaseDeadline"),
+  });
+  const fallbackLeadId = String(formData.get("leadId") ?? "");
+  if (!parsed.success) redirect(`/leads/${fallbackLeadId}?error=Revise+o+perfil+imobiliário.`);
+  const supabase = await createClient();
+  const { error } = await supabase.from("real_estate_lead_profiles").upsert(
+    {
+      organization_id: organization.id,
+      lead_id: parsed.data.leadId,
+      budget_min: parsed.data.budgetMin,
+      budget_max: parsed.data.budgetMax,
+      preferred_city: parsed.data.preferredCity,
+      preferred_neighborhood: parsed.data.preferredNeighborhood,
+      property_type: parsed.data.propertyType,
+      purpose: parsed.data.purpose,
+      minimum_bedrooms: parsed.data.minimumBedrooms,
+      payment_method: parsed.data.paymentMethod,
+      available_down_payment: parsed.data.availableDownPayment,
+      urgency: parsed.data.urgency,
+      purchase_deadline: parsed.data.purchaseDeadline,
+      created_by: user.id,
+    },
+    { onConflict: "lead_id" },
+  );
+  if (error) {
+    console.error("real_estate_profile_save_failed", { code: error.code });
+    redirect(`/leads/${parsed.data.leadId}?error=Não+foi+possível+salvar+o+perfil.`);
+  }
+  revalidatePath(`/leads/${parsed.data.leadId}`);
+  redirect(`/leads/${parsed.data.leadId}?message=Perfil+imobiliário+salvo.`);
+}
+
+export async function recommendProperty(formData: FormData) {
+  const { user, organization } = await requireWorkspace();
+  if (organization.vertical !== "real_estate") return;
+  const parsed = z.object({ leadId: z.uuid(), propertyId: z.uuid() }).safeParse({
+    leadId: formData.get("leadId"),
+    propertyId: formData.get("propertyId"),
+  });
+  if (!parsed.success) return;
+  const recommendations = await getDeterministicMatches(organization.id, parsed.data.leadId);
+  const recommendation = recommendations.find((item) => item.property.id === parsed.data.propertyId);
+  if (!recommendation) redirect(`/leads/${parsed.data.leadId}?error=Este+imóvel+não+atende+aos+critérios+atuais.`);
+  const supabase = await createClient();
+  const { error } = await supabase.from("property_matches").upsert(
+    {
+      organization_id: organization.id,
+      lead_id: parsed.data.leadId,
+      property_id: recommendation.property.id,
+      score: recommendation.score,
+      match_reason: recommendation.reasons.join(", "),
+      status: "recommended",
+      created_by: user.id,
+    },
+    { onConflict: "organization_id,lead_id,property_id" },
+  );
+  if (error) {
+    console.error("property_recommendation_failed", { code: error.code });
+    redirect(`/leads/${parsed.data.leadId}?error=Não+foi+possível+salvar+a+recomendação.`);
+  }
+  revalidatePath(`/leads/${parsed.data.leadId}`);
+  revalidatePath(`/properties/${parsed.data.propertyId}`);
+  revalidatePath("/dashboard");
+  redirect(`/leads/${parsed.data.leadId}?message=Imóvel+recomendado.`);
+}
+
+export async function updatePropertyMatchStatus(formData: FormData) {
+  const { organization } = await requireWorkspace();
+  if (organization.vertical !== "real_estate") return;
+  const parsed = z.object({
+    leadId: z.uuid(),
+    matchId: z.uuid(),
+    status: z.enum(["recommended", "sent", "favorite", "rejected", "visit_scheduled"]),
+  }).safeParse({
+    leadId: formData.get("leadId"),
+    matchId: formData.get("matchId"),
+    status: formData.get("status"),
+  });
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("property_matches")
+    .update({ status: parsed.data.status })
+    .eq("organization_id", organization.id)
+    .eq("lead_id", parsed.data.leadId)
+    .eq("id", parsed.data.matchId);
+  if (error) console.error("property_match_status_failed", { code: error.code });
+  revalidatePath(`/leads/${parsed.data.leadId}`);
 }

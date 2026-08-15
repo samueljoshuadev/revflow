@@ -31,13 +31,22 @@ export default async function SettingsPage({
   >;
   const defaultHours = workHours?.["1"] ?? ["09:00", "18:00"];
   const canAdmin = ["owner", "admin"].includes(organization.role);
+  const isRealEstate = organization.vertical === "real_estate";
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
       <PageHeader
         eyebrow="Administração"
-        title="Configurações da agência"
-        description="Dados persistidos, agenda pública, serviços e integrações do workspace."
+        title={
+          isRealEstate
+            ? "Configurações da imobiliária"
+            : "Configurações da agência"
+        }
+        description={
+          isRealEstate
+            ? "Dados da empresa, agenda de visitas e integrações do workspace."
+            : "Dados persistidos, agenda pública, serviços e integrações do workspace."
+        }
       />
       {(params.error || params.message) && (
         <p
@@ -61,6 +70,20 @@ export default async function SettingsPage({
               defaultValue={organization.name}
               required
             />
+            <div>
+              <Label htmlFor="verticalDisplay">Vertical</Label>
+              <Input
+                id="verticalDisplay"
+                value={isRealEstate ? "Imobiliária" : "Agência"}
+                disabled
+                readOnly
+                className={
+                  isRealEstate
+                    ? "border-[#E8A51B]/30 bg-[#FFF6D8] font-medium text-[#8B5B05]"
+                    : undefined
+                }
+              />
+            </div>
             <Field
               label="CNPJ/CPF"
               name="document"
@@ -154,7 +177,7 @@ export default async function SettingsPage({
               name="bookingEnabled"
               type="checkbox"
               defaultChecked={organization.booking_enabled}
-              className="size-4 accent-violet-600"
+              className="size-4 accent-brand"
             />
             Ativar página pública em{" "}
             <span className="font-mono text-xs">/book/{organization.slug}</span>
@@ -168,7 +191,7 @@ export default async function SettingsPage({
         )}
       </form>
 
-      <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-xs sm:p-6">
+      {!isRealEstate && <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-xs sm:p-6">
         <h2 className="text-sm font-semibold text-gray-900">Serviços</h2>
         <div className="mt-4 divide-y divide-gray-100">
           {services.map((service) => (
@@ -234,9 +257,9 @@ export default async function SettingsPage({
             <Plus className="size-4" /> Adicionar serviço
           </button>
         </form>
-      </section>
+      </section>}
 
-      <section className="mt-8 rounded-xl border border-violet-100 bg-violet-50/60 p-5 shadow-xs sm:p-6">
+      <section className="mt-8 rounded-xl border border-brand/20 bg-brand-soft/60 p-5 shadow-xs sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-xs">

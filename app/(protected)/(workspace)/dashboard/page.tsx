@@ -11,14 +11,27 @@ import {
 import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
+import { RealEstateDashboard } from "@/components/real-estate/real-estate-dashboard";
 import { formatCurrency } from "@/lib/utils";
 import { getDashboardMetrics } from "@/services/dashboard";
+import { getRealEstateDashboardMetrics } from "@/services/real-estate-dashboard";
 import { requireWorkspace } from "@/services/workspace";
 
 export const metadata = { title: "Visão geral" };
 
 export default async function DashboardPage() {
   const { organization } = await requireWorkspace();
+  if (organization.vertical === "real_estate") {
+    const realEstateMetrics = await getRealEstateDashboardMetrics(
+      organization.id,
+    );
+    return (
+      <RealEstateDashboard
+        organizationName={organization.name}
+        metrics={realEstateMetrics}
+      />
+    );
+  }
   const metrics = await getDashboardMetrics(organization.id);
   const maxStageCount = Math.max(
     ...metrics.stages.map((stage) => stage.count),

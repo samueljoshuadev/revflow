@@ -32,6 +32,7 @@ export default async function WorkspaceLayout({
       organizationName={organization.name}
       organizationId={organization.id}
       organizationRole={organization.role}
+      organizationVertical={organization.vertical}
       organizations={organizations}
       userName={profile?.full_name ?? ""}
       userEmail={user.email ?? ""}

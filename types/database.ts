@@ -8,12 +8,29 @@ export type Json =
 
 export type OrganizationRole =
   "owner" | "admin" | "manager" | "member" | "viewer";
+export type OrganizationVertical = "agency" | "real_estate";
 export type LeadPriority = "low" | "medium" | "high" | "urgent";
+export type PropertyStatus = "available" | "reserved" | "sold" | "inactive";
+export type PropertyType =
+  | "apartment"
+  | "house"
+  | "commercial"
+  | "land"
+  | "rural"
+  | "other";
+export type PropertyPurpose = "sale" | "rent";
+export type PropertyMatchStatus =
+  | "recommended"
+  | "sent"
+  | "favorite"
+  | "rejected"
+  | "visit_scheduled";
 
 type Organization = {
   id: string;
   name: string;
   slug: string;
+  vertical: OrganizationVertical;
   created_by: string | null;
   settings: Json;
   document: string | null;
@@ -170,6 +187,7 @@ type Meeting = {
   id: string;
   organization_id: string;
   lead_id: string;
+  property_id: string | null;
   owner_id: string | null;
   title: string;
   description: string | null;
@@ -189,6 +207,90 @@ type Meeting = {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type Property = {
+  id: string;
+  organization_id: string;
+  code: string;
+  title: string;
+  status: PropertyStatus;
+  property_type: PropertyType;
+  purpose: PropertyPurpose;
+  price: number;
+  city: string;
+  neighborhood: string | null;
+  area_m2: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  parking_spaces: number | null;
+  description: string | null;
+  features: string[];
+  responsible_user_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+
+type PropertyPhoto = {
+  id: string;
+  organization_id: string;
+  property_id: string;
+  storage_path: string;
+  alt_text: string | null;
+  position: number;
+  created_by: string | null;
+  created_at: string;
+};
+
+type RealEstateLeadProfile = {
+  lead_id: string;
+  organization_id: string;
+  budget_min: number | null;
+  budget_max: number | null;
+  preferred_city: string | null;
+  preferred_neighborhood: string | null;
+  property_type: PropertyType | null;
+  purpose: PropertyPurpose | null;
+  minimum_bedrooms: number | null;
+  payment_method:
+    | "cash"
+    | "financing"
+    | "consortium"
+    | "exchange"
+    | "other"
+    | null;
+  available_down_payment: number | null;
+  urgency: "low" | "medium" | "high" | "immediate" | null;
+  purchase_deadline: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type PropertyMatch = {
+  id: string;
+  organization_id: string;
+  lead_id: string;
+  property_id: string;
+  score: number;
+  match_reason: string;
+  status: PropertyMatchStatus;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type RealEstateEvent = {
+  id: string;
+  organization_id: string;
+  entity_type: "property" | "property_match" | "lead_profile" | "visit";
+  entity_id: string;
+  actor_user_id: string | null;
+  event_type: string;
+  metadata: Json;
+  created_at: string;
 };
 
 type Client = {
@@ -437,6 +539,11 @@ export type Database = {
       tags: Table<Tag>;
       lead_tags: Table<LeadTag>;
       meetings: Table<Meeting>;
+      properties: Table<Property>;
+      property_photos: Table<PropertyPhoto>;
+      real_estate_lead_profiles: Table<RealEstateLeadProfile>;
+      property_matches: Table<PropertyMatch>;
+      real_estate_events: Table<RealEstateEvent>;
       clients: Table<Client>;
       proposals: Table<Proposal>;
       proposal_items: Table<ProposalItem>;
@@ -455,6 +562,14 @@ export type Database = {
     Functions: {
       create_organization_with_defaults: {
         Args: { p_name: string; p_slug: string };
+        Returns: string;
+      };
+      create_organization_with_vertical: {
+        Args: {
+          p_name: string;
+          p_slug: string;
+          p_vertical: OrganizationVertical;
+        };
         Returns: string;
       };
       move_lead_stage: {
@@ -523,6 +638,34 @@ export type Database = {
         Args: { p_organization_id: string };
         Returns: Json;
       };
+      get_real_estate_dashboard_metrics: {
+        Args: { p_organization_id: string };
+        Returns: Json;
+      };
+      reschedule_property_visit: {
+        Args: {
+          p_organization_id: string;
+          p_meeting_id: string;
+          p_starts_at: string;
+          p_ends_at: string;
+        };
+        Returns: undefined;
+      };
+      schedule_property_visit: {
+        Args: {
+          p_organization_id: string;
+          p_lead_id: string;
+          p_property_id: string;
+          p_owner_id: string;
+          p_title: string;
+          p_starts_at: string;
+          p_ends_at: string;
+          p_timezone: string;
+          p_description?: string | null;
+          p_location?: string | null;
+        };
+        Returns: string;
+      };
       schedule_meeting: {
         Args: {
           p_organization_id: string;
@@ -568,7 +711,13 @@ export type Database = {
         Returns: string;
       };
     };
-    Enums: Record<string, never>;
+    Enums: {
+      organization_vertical: OrganizationVertical;
+      property_status: PropertyStatus;
+      property_type: PropertyType;
+      property_purpose: PropertyPurpose;
+      property_match_status: PropertyMatchStatus;
+    };
     CompositeTypes: Record<string, never>;
   };
 };

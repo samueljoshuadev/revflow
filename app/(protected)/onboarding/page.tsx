@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, Check, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, Check, House, ShieldCheck } from "lucide-react";
 
 import { Brand } from "@/components/brand";
 import { Input, Label } from "@/components/ui/field";
@@ -23,11 +23,11 @@ export default async function OnboardingPage({
             <Building2 className="size-5" />
           </div>
           <h1 className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-gray-950">
-            Configure sua agência
+            Configure sua operação
           </h1>
           <p className="mt-2 text-sm leading-6 text-gray-500">
-            Vamos criar seu ambiente isolado, o pipeline comercial e os serviços
-            iniciais.
+            Escolha o modelo da empresa. O RevFlow configura a identidade e o
+            pipeline adequados sem misturar seus dados.
           </p>
 
           {error && (
@@ -37,6 +37,45 @@ export default async function OnboardingPage({
           )}
 
           <form action={createOrganization} className="mt-7">
+            <fieldset>
+              <legend className="text-xs font-medium text-gray-700">
+                Qual é o tipo da sua empresa?
+              </legend>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <label className="relative cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50">
+                  <input
+                    type="radio"
+                    name="vertical"
+                    value="agency"
+                    defaultChecked
+                    className="sr-only"
+                  />
+                  <Building2 className="size-5 text-violet-600" />
+                  <span className="mt-3 block text-sm font-semibold text-gray-900">
+                    Agência
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-gray-500">
+                    Leads, propostas, clientes e projetos.
+                  </span>
+                </label>
+                <label className="relative cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition has-[:checked]:border-amber-400 has-[:checked]:bg-[#FFF6D8]">
+                  <input
+                    type="radio"
+                    name="vertical"
+                    value="real_estate"
+                    className="sr-only"
+                  />
+                  <House className="size-5 text-[#C77B08]" />
+                  <span className="mt-3 block text-sm font-semibold text-gray-900">
+                    Imobiliária
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-gray-500">
+                    Imóveis, visitas, corretores e matching.
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+            <div className="mt-5">
             <Label htmlFor="name">Nome da agência ou empresa</Label>
             <Input
               id="name"
@@ -47,6 +86,7 @@ export default async function OnboardingPage({
               autoFocus
               required
             />
+            </div>
             <button className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-sm font-medium text-white shadow-sm transition hover:bg-brand-dark">
               Criar meu workspace
               <ArrowRight className="size-4" />

@@ -74,7 +74,7 @@ export async function listUserOrganizations(userId: string) {
 
   const { data: organizations, error: organizationError } = await supabase
     .from("organizations")
-    .select("id, name, slug")
+    .select("id, name, slug, vertical")
     .in(
       "id",
       memberships.map((membership) => membership.organization_id),

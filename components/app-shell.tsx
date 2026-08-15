@@ -12,6 +12,8 @@ import {
   Menu,
   MessageCircle,
   PanelTop,
+  Building2,
+  BarChart3,
   PlugZap,
   Plus,
   Search,
@@ -27,8 +29,9 @@ import { signOut } from "@/app/(protected)/actions";
 import { switchOrganization } from "@/app/(protected)/(workspace)/settings/actions";
 import { Brand } from "@/components/brand";
 import { cn, initials } from "@/lib/utils";
+import type { OrganizationVertical } from "@/types/database";
 
-const navigation: Array<{
+const agencyNavigation: Array<{
   label: string;
   href: string;
   icon: typeof LayoutDashboard;
@@ -43,12 +46,28 @@ const navigation: Array<{
   { label: "Clientes", href: "/clients", icon: Users },
 ];
 
+const realEstateNavigation: typeof agencyNavigation = [
+  { label: "Visão geral", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Leads", href: "/leads", icon: ContactRound },
+  { label: "Imóveis", href: "/properties", icon: Building2 },
+  { label: "Visitas", href: "/visits", icon: CalendarDays },
+  { label: "Agenda", href: "/calendar", icon: CalendarDays },
+  { label: "Corretores", href: "/team", icon: Users },
+  { label: "Relatórios", href: "/reports", icon: BarChart3 },
+];
+
 type AppShellProps = {
   children: React.ReactNode;
   organizationName: string;
   organizationId: string;
   organizationRole: string;
-  organizations: { id: string; name: string; role: string }[];
+  organizationVertical: OrganizationVertical;
+  organizations: {
+    id: string;
+    name: string;
+    role: string;
+    vertical: OrganizationVertical;
+  }[];
   userName: string;
   userEmail: string;
 };
@@ -58,17 +77,20 @@ export function AppShell({
   organizationName,
   organizationId,
   organizationRole,
+  organizationVertical,
   organizations,
   userName,
   userEmail,
 }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isRealEstate = organizationVertical === "real_estate";
+  const navigation = isRealEstate ? realEstateNavigation : agencyNavigation;
 
   const sidebar = (
     <>
       <div className="flex h-[72px] items-center px-5">
-        <Brand />
+        <Brand vertical={organizationVertical} />
       </div>
       <form
         action={switchOrganization}
@@ -199,7 +221,10 @@ export function AppShell({
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      data-vertical={organizationVertical}
+      className="min-h-screen bg-background"
+    >
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-gray-200/80 bg-white/95 shadow-[8px_0_32px_rgba(25,28,57,0.025)] backdrop-blur-xl lg:flex">
         {sidebar}
       </aside>
@@ -234,15 +259,15 @@ export function AppShell({
             <Menu className="size-5" />
           </button>
           <form
-            action="/leads"
+            action={isRealEstate ? "/properties" : "/leads"}
             className="relative hidden w-full max-w-sm sm:block"
           >
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
             <input
               name="q"
               className="h-9 w-full rounded-lg border-0 bg-gray-100/80 pr-16 pl-9 text-sm placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-violet-200"
-              placeholder="Buscar leads..."
-              aria-label="Buscar leads"
+              placeholder={isRealEstate ? "Buscar imóveis..." : "Buscar leads..."}
+              aria-label={isRealEstate ? "Buscar imóveis" : "Buscar leads"}
             />
             <kbd className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[9px] text-gray-400">
               ⌘ K
@@ -257,11 +282,13 @@ export function AppShell({
               <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-brand ring-2 ring-white" />
             </button>
             <Link
-              href="/leads/new"
+              href={isRealEstate ? "/properties/new" : "/leads/new"}
               className="ml-1 inline-flex h-9 items-center gap-2 rounded-lg bg-gray-950 px-3.5 text-xs font-medium text-white shadow-sm transition hover:bg-gray-800"
             >
               <Plus className="size-4" />
-              <span className="hidden sm:inline">Novo lead</span>
+              <span className="hidden sm:inline">
+                {isRealEstate ? "Novo imóvel" : "Novo lead"}
+              </span>
             </Link>
           </div>
         </header>

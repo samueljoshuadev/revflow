@@ -23,3 +23,27 @@ export type LeadDetail = Tables<"leads"> & {
   notes: (Tables<"lead_notes"> & { author_name: string | null })[];
   tags: Tables<"tags">[];
 };
+
+export type PropertyListItem = Tables<"properties"> & {
+  responsible_name: string | null;
+  photo_count: number;
+};
+
+export type PropertyDetail = Tables<"properties"> & {
+  responsible_name: string | null;
+  photos: (Tables<"property_photos"> & { signed_url: string | null })[];
+  matches: (Tables<"property_matches"> & {
+    lead_name: string | null;
+  })[];
+  visits: (Tables<"meetings"> & {
+    lead_name: string | null;
+    owner_name: string | null;
+  })[];
+  events: Tables<"real_estate_events">[];
+};
+
+export type DeterministicPropertyMatch = {
+  property: Tables<"properties">;
+  score: number;
+  reasons: string[];
+};

@@ -14,6 +14,10 @@ import { requireWorkspace } from "@/services/workspace";
 
 const meetingSchema = z.object({
   leadId: z.uuid(),
+  propertyId: z.preprocess(
+    (value) => (value === "" || value === null ? null : value),
+    z.uuid().nullable(),
+  ),
   ownerId: z.uuid(),
   title: z.string().trim().min(2).max(180),
   startsAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
@@ -28,6 +32,7 @@ export async function createMeeting(formData: FormData) {
   const { organization } = await requireWorkspace();
   const parsed = meetingSchema.safeParse({
     leadId: formData.get("leadId"),
+    propertyId: formData.get("propertyId"),
     ownerId: formData.get("ownerId"),
     title: formData.get("title"),
     startsAt: formData.get("startsAt"),
@@ -50,17 +55,31 @@ export async function createMeeting(formData: FormData) {
   const endsAt = new Date(startsAt.getTime() + parsed.data.duration * 60_000);
 
   const supabase = await createClient();
-  const { data: meetingId, error } = await supabase.rpc("schedule_meeting", {
-    p_organization_id: organization.id,
-    p_lead_id: parsed.data.leadId,
-    p_owner_id: parsed.data.ownerId,
-    p_title: parsed.data.title,
-    p_starts_at: startsAt.toISOString(),
-    p_ends_at: endsAt.toISOString(),
-    p_timezone: organization.timezone,
-    p_description: parsed.data.description || null,
-    p_location: parsed.data.location || organization.meeting_location,
-  });
+  const meetingResult = parsed.data.propertyId
+    ? await supabase.rpc("schedule_property_visit", {
+        p_organization_id: organization.id,
+        p_lead_id: parsed.data.leadId,
+        p_property_id: parsed.data.propertyId,
+        p_owner_id: parsed.data.ownerId,
+        p_title: parsed.data.title,
+        p_starts_at: startsAt.toISOString(),
+        p_ends_at: endsAt.toISOString(),
+        p_timezone: organization.timezone,
+        p_description: parsed.data.description || null,
+        p_location: parsed.data.location || organization.meeting_location,
+      })
+    : await supabase.rpc("schedule_meeting", {
+        p_organization_id: organization.id,
+        p_lead_id: parsed.data.leadId,
+        p_owner_id: parsed.data.ownerId,
+        p_title: parsed.data.title,
+        p_starts_at: startsAt.toISOString(),
+        p_ends_at: endsAt.toISOString(),
+        p_timezone: organization.timezone,
+        p_description: parsed.data.description || null,
+        p_location: parsed.data.location || organization.meeting_location,
+      });
+  const { data: meetingId, error } = meetingResult;
   if (error) {
     console.error("meeting_creation_failed", { code: error.code });
     const message = error.message.includes("conflict")
@@ -70,6 +89,10 @@ export async function createMeeting(formData: FormData) {
   }
   let message = "Reunião+agendada.";
   if (typeof meetingId === "string") {
+    if (parsed.data.propertyId) {
+      message = "Visita+agendada.";
+      revalidatePath(`/properties/${parsed.data.propertyId}`);
+    }
     const sync = await syncMeetingToGoogle(organization.id, meetingId, {
       notifyLeadByEmail: parsed.data.notifyLeadByEmail,
     });
@@ -81,6 +104,7 @@ export async function createMeeting(formData: FormData) {
   }
   revalidatePath("/calendar");
   revalidatePath("/dashboard");
+  revalidatePath("/visits");
   redirect(`/calendar?message=${message}`);
 }
 
@@ -112,6 +136,7 @@ export async function updateMeetingStatus(formData: FormData) {
   }
   revalidatePath("/calendar");
   revalidatePath("/dashboard");
+  revalidatePath("/visits");
 }
 
 

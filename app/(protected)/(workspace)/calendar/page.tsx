@@ -6,6 +6,7 @@ import {
   Video,
   XCircle,
 } from "lucide-react";
+import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
@@ -19,13 +20,17 @@ export const metadata = { title: "Agenda" };
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; leadId?: string; message?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    leadId?: string;
+    propertyId?: string;
+    message?: string;
+  }>;
 }) {
   const params = await searchParams;
   const { user, organization } = await requireWorkspace();
-  const { meetings, leads, members, referenceTime } = await getCalendarData(
-    organization.id,
-  );
+  const { meetings, leads, members, properties, referenceTime } =
+    await getCalendarData(organization.id);
   const now = new Date(referenceTime).getTime();
   const upcoming = meetings.filter(
     (meeting) =>
@@ -47,11 +52,19 @@ export default async function CalendarPage({
     ? `Próxima ação sugerida: ${selectedLead.next_action}`
     : "";
   const defaultOwnerId = selectedLead?.owner_id ?? user.id;
+  const isRealEstate = organization.vertical === "real_estate";
+  const selectedProperty =
+    params.propertyId &&
+    properties.some((property) => property.id === params.propertyId)
+      ? properties.find((property) => property.id === params.propertyId)
+      : null;
 
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
       <PageHeader
-        eyebrow="Compromissos comerciais"
+        eyebrow={
+          isRealEstate ? "Visitas e compromissos" : "Compromissos comerciais"
+        }
         title="Agenda"
         description={`${upcoming.length} reuniões futuras · horários em ${organization.timezone}`}
       />
@@ -118,6 +131,23 @@ export default async function CalendarPage({
                   ))}
                 </Select>
               </div>
+              {isRealEstate && (
+                <div>
+                  <Label htmlFor="propertyId">Imóvel da visita</Label>
+                  <Select
+                    id="propertyId"
+                    name="propertyId"
+                    defaultValue={selectedProperty?.id ?? ""}
+                  >
+                    <option value="">Reunião sem imóvel</option>
+                    {properties.map((property) => (
+                      <option key={property.id} value={property.id}>
+                        {property.code} · {property.title}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              )}
               <div className="grid grid-cols-[1fr_120px] gap-3">
                 <Field
                   label="Data e hora"
@@ -170,7 +200,7 @@ export default async function CalendarPage({
                   type="checkbox"
                   name="notifyLeadByEmail"
                   defaultChecked={Boolean(selectedLead?.email)}
-                  className="mt-1 size-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  className="mt-1 size-4 rounded border-gray-300 text-brand focus:ring-brand"
                 />
                 <span>
                   Enviar convite por e-mail pelo Google Calendar
@@ -248,7 +278,7 @@ function MeetingList({
                 <div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`size-2 rounded-full ${meeting.status === "scheduled" ? "bg-violet-500" : meeting.status === "completed" ? "bg-emerald-500" : "bg-gray-300"}`}
+                      className={`size-2 rounded-full ${meeting.status === "scheduled" ? "bg-brand" : meeting.status === "completed" ? "bg-emerald-500" : "bg-gray-300"}`}
                     />
                     <h3 className="text-sm font-semibold text-gray-900">
                       {meeting.title}
@@ -260,6 +290,14 @@ function MeetingList({
                       ? ` · ${meeting.owner.full_name}`
                       : ""}
                   </p>
+                  {meeting.property && (
+                    <Link
+                      href={`/properties/${meeting.property.id}`}
+                      className="mt-2 inline-flex rounded-md bg-[#FFF6D8] px-2 py-1 text-[10px] font-semibold text-[#8B5B05] hover:bg-[#FFE8AA]"
+                    >
+                      {meeting.property.code} · {meeting.property.title}
+                    </Link>
+                  )}
                   <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-gray-500">
                     <span className="flex items-center gap-1.5">
                       <Clock3 className="size-3.5" />

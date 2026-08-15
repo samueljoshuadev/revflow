@@ -1,5 +1,9 @@
 # Banco de dados
 
+## Vertical imobiliária
+
+A migration `202608150001_real_estate_vertical.sql` adiciona `organizations.vertical`, `properties`, `property_photos`, `real_estate_lead_profiles`, `property_matches` e `real_estate_events`. `meetings.property_id` conecta a agenda existente ao imóvel. Todas as referências de domínio utilizam `organization_id`, RLS e FKs compostas para impedir relações cruzadas entre tenants.
+
 ## Schema implementado
 
 | Tabela                          | Responsabilidade                                   |

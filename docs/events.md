@@ -1,5 +1,9 @@
 # Eventos de lead
 
+## Eventos imobiliários
+
+Os fatos `property_created`, `property_updated`, `property_deleted`, `property_recommended`, `property_match_updated`, `property_match_removed`, `real_estate_profile_created`, `real_estate_profile_updated` e `visit_rescheduled` são append-only. Eles são registrados em `lead_events`, `real_estate_events` ou em ambos, conforme a entidade afetada. Os eventos existentes de reunião continuam registrando cancelamento, conclusão e ausência.
+
 ## Contrato
 
 Cada linha de `lead_events` contém:

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function getCalendarData(organizationId: string) {
   const supabase = await createClient();
-  const [meetingsResult, leadsResult, membersResult] = await Promise.all([
+  const [meetingsResult, leadsResult, membersResult, propertiesResult] = await Promise.all([
     supabase
       .from("meetings")
       .select("*")
@@ -24,9 +24,20 @@ export async function getCalendarData(organizationId: string) {
       .from("organization_members")
       .select("user_id, role")
       .eq("organization_id", organizationId),
+    supabase
+      .from("properties")
+      .select("id, code, title, city, neighborhood")
+      .eq("organization_id", organizationId)
+      .eq("status", "available")
+      .is("archived_at", null)
+      .order("title")
+      .limit(500),
   ]);
   const firstError =
-    meetingsResult.error ?? leadsResult.error ?? membersResult.error;
+    meetingsResult.error ??
+    leadsResult.error ??
+    membersResult.error ??
+    propertiesResult.error;
   if (firstError) throw firstError;
 
   const meetings = meetingsResult.data ?? [];
@@ -42,6 +53,10 @@ export async function getCalendarData(organizationId: string) {
   if (profilesError) throw profilesError;
   const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
   const leadMap = new Map(leads.map((lead) => [lead.id, lead]));
+  const properties = propertiesResult.data ?? [];
+  const propertyMap = new Map(
+    properties.map((property) => [property.id, property]),
+  );
 
   return {
     referenceTime: new Date().toISOString(),
@@ -51,8 +66,12 @@ export async function getCalendarData(organizationId: string) {
       owner: meeting.owner_id
         ? (profileMap.get(meeting.owner_id) ?? null)
         : null,
+      property: meeting.property_id
+        ? (propertyMap.get(meeting.property_id) ?? null)
+        : null,
     })),
     leads,
+    properties,
     members: members.map((member) => ({
       ...member,
       profile: profileMap.get(member.user_id) ?? null,
