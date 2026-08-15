@@ -46,6 +46,18 @@ Novos nomes devem representar fatos no passado. Evite comandos como `send_messag
 
 Usuário, timestamp e tenant ficam em colunas próprias. A mesma atualização dispara `audit_logs` com o registro anterior e o novo.
 
+## Qualificação e avanço por IA
+
+`apply_lead_ai_analysis_and_advance` grava `lead_analyzed` e, quando todas as
+regras determinísticas são satisfeitas, também grava `stage_changed` com
+`source = ai`, `automated = true`, IDs e nomes das etapas, justificativa e ID da
+análise. A IA nunca recebe permissão para escolher uma etapa arbitrária.
+
+Em agências, a transição permitida termina em `qualificado`. Em imobiliárias,
+ela termina em `perfil-identificado` e exige propósito, tipo do imóvel, cidade e
+orçamento máximo no perfil tipado. Etapas fechadas, reunião, proposta, contrato,
+ganho e perda não são movimentadas por esta automação.
+
 ## Idempotência
 
 Produtores internos transacionais não precisam de chave externa. Webhooks devem usar uma chave estável do provedor; o índice único `(organization_id, source, idempotency_key)` impede evento duplicado. A deduplicação do payload começa antes, em `webhook_events(provider, external_event_id)`.
@@ -57,6 +69,7 @@ Produtores internos transacionais não precisam de chave externa. Webhooks devem
 ## Evolução
 
 Metadados de evento devem ter schema versionado no produtor quando passarem a dirigir automações. Consumidores desconhecidos ignoram campos adicionais. Mudanças incompatíveis usam nova versão ou novo `event_type`.
+
 ## Operação e autorização
 
 As mudanças de papel de membros são eventos de auditoria operacional, não fatos de lead. O envio de WhatsApp começa como uma mensagem `queued`; a atualização para `sent` ou `failed` é feita pelo adaptador server-side após a resposta da Meta. Não registre conteúdo de mensagens, tokens ou dados de integração em logs de aplicação.

@@ -18,10 +18,13 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CircleAlert, Search } from "lucide-react";
+import { CircleAlert, CircleCheck, Search } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
-import { moveLeadStage } from "@/app/(protected)/(workspace)/pipeline/actions";
+import {
+  moveLeadStage,
+  runLeadAiAutomation,
+} from "@/app/(protected)/(workspace)/pipeline/actions";
 import { LeadCard } from "@/components/kanban/lead-card";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { BoardStage, PipelineBoard } from "@/types/crm";
@@ -31,7 +34,11 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
   const [query, setQuery] = useState("");
   const [priority, setPriority] = useState("all");
   const [activeLeadId, setActiveLeadId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    tone: "error" | "success";
+    text: string;
+  } | null>(null);
+  const [automatingLeadId, setAutomatingLeadId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -101,12 +108,48 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
     );
 
     startTransition(() => {
-      void moveLeadStage({ leadId, toStageId }).then((result) => {
-        if (!result.ok) {
+      void moveLeadStage({ leadId, toStageId })
+        .then((result) => {
+          if (result.ok) return;
           setStages(snapshot);
-          setFeedback(result.error);
-        }
-      });
+          setFeedback({ tone: "error", text: result.error });
+        })
+        .catch(() => {
+          setStages(snapshot);
+          setFeedback({
+            tone: "error",
+            text: "Não foi possível confirmar a movimentação. Atualize a página antes de tentar novamente.",
+          });
+        });
+    });
+  }
+
+  function handleAiAutomation(leadId: string) {
+    if (automatingLeadId) return;
+    setFeedback(null);
+    setAutomatingLeadId(leadId);
+    startTransition(() => {
+      void runLeadAiAutomation({ leadId })
+        .then((result) => {
+          if (!result.ok) {
+            setFeedback({ tone: "error", text: result.error });
+            return;
+          }
+          setStages((current) => applyQualificationLocally(current, result));
+          setFeedback({
+            tone: "success",
+            text: result.stageAdvanced
+              ? `Lead qualificado e movido para ${result.toStageName ?? "a etapa segura"}.`
+              : "Lead qualificado. A etapa foi mantida porque os critérios de avanço não foram atendidos.",
+          });
+        })
+        .catch(() => {
+          setFeedback({
+            tone: "error",
+            text: "Não foi possível confirmar a análise. Atualize a página antes de tentar novamente.",
+          });
+        })
+        .finally(() => setAutomatingLeadId(null));
     });
   }
 
@@ -143,8 +186,20 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
       </div>
 
       {feedback && (
-        <div className="mx-4 mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 sm:mx-6 lg:mx-8">
-          <CircleAlert className="size-4" /> {feedback}
+        <div
+          className={cn(
+            "mx-4 mt-4 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs sm:mx-6 lg:mx-8",
+            feedback.tone === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-emerald-200 bg-emerald-50 text-emerald-700",
+          )}
+        >
+          {feedback.tone === "error" ? (
+            <CircleAlert className="size-4" />
+          ) : (
+            <CircleCheck className="size-4" />
+          )}
+          {feedback.text}
         </div>
       )}
 
@@ -157,7 +212,12 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
       >
         <div className="flex min-h-[calc(100vh-218px)] gap-3 overflow-x-auto px-4 py-5 sm:px-6 lg:px-8">
           {visibleStages.map((stage) => (
-            <KanbanColumn key={stage.id} stage={stage} />
+            <KanbanColumn
+              key={stage.id}
+              stage={stage}
+              automatingLeadId={automatingLeadId}
+              onAutomate={handleAiAutomation}
+            />
           ))}
         </div>
         <DragOverlay>
@@ -168,7 +228,15 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
   );
 }
 
-function KanbanColumn({ stage }: { stage: BoardStage }) {
+function KanbanColumn({
+  stage,
+  automatingLeadId,
+  onAutomate,
+}: {
+  stage: BoardStage;
+  automatingLeadId: string | null;
+  onAutomate: (leadId: string) => void;
+}) {
   const { setNodeRef, isOver } = useDroppable({
     id: `stage:${stage.id}`,
     data: { type: "stage", stageId: stage.id },
@@ -207,7 +275,12 @@ function KanbanColumn({ stage }: { stage: BoardStage }) {
           strategy={verticalListSortingStrategy}
         >
           {stage.leads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} />
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              automationPending={automatingLeadId === lead.id}
+              onAutomate={onAutomate}
+            />
           ))}
         </SortableContext>
         {stage.leads.length === 0 && (
@@ -246,4 +319,39 @@ function moveLocally(
     }
     return stage;
   });
+}
+
+function applyQualificationLocally(
+  stages: BoardStage[],
+  result: {
+    leadId: string;
+    score: number;
+    priority: "low" | "medium" | "high" | "urgent";
+    nextAction: string;
+    stageAdvanced: boolean;
+    toStageId: string | null;
+  },
+) {
+  const currentStage = stages.find((stage) =>
+    stage.leads.some((lead) => lead.id === result.leadId),
+  );
+  const moved =
+    result.stageAdvanced && result.toStageId && currentStage
+      ? moveLocally(stages, result.leadId, currentStage.id, result.toStageId)
+      : stages;
+
+  return moved.map((stage) => ({
+    ...stage,
+    leads: stage.leads.map((lead) =>
+      lead.id === result.leadId
+        ? {
+            ...lead,
+            score: result.score,
+            priority: result.priority,
+            next_action: result.nextAction,
+            ai_status: "analyzed" as const,
+          }
+        : lead,
+    ),
+  }));
 }

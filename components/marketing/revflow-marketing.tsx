@@ -24,9 +24,11 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
+import { ProductDemo, type DemoVertical } from "./product-demo";
 import styles from "./revflow-marketing.module.css";
 
-type MarketingVariant = "home" | "agency" | "real-estate" | "pricing";
+type MarketingVariant =
+  "home" | "agency" | "real-estate" | "how-it-works" | "pricing";
 
 const salesWhatsAppNumber =
   process.env.NEXT_PUBLIC_SALES_WHATSAPP_NUMBER ?? "5511988407914";
@@ -82,9 +84,7 @@ function BrandMark({ variant }: { variant: MarketingVariant }) {
     <span className={styles.brand}>
       <Image
         src={
-          isRealEstate
-            ? "/revflow-imobiliarias.png"
-            : "/revflow-agencias.png"
+          isRealEstate ? "/revflow-imobiliarias.png" : "/revflow-agencias.png"
         }
         alt={isRealEstate ? "RevFlow para Imobiliárias" : "RevFlow"}
         width={177}
@@ -127,9 +127,13 @@ function Header({ active }: { active: MarketingVariant }) {
           >
             Preços
           </Link>
-          <a href="#como-funciona" onClick={() => setOpen(false)}>
+          <Link
+            className={active === "how-it-works" ? styles.activeLink : ""}
+            href="/como-funciona"
+            onClick={() => setOpen(false)}
+          >
             Como funciona
-          </a>
+          </Link>
           <Link
             className={styles.loginLink}
             href="/login"
@@ -137,6 +141,17 @@ function Header({ active }: { active: MarketingVariant }) {
           >
             Entrar <ArrowRight size={15} />
           </Link>
+          <a
+            className={styles.headerCta}
+            href={salesWhatsAppUrl(
+              "Conheci o RevFlow e quero solicitar uma demonstração.",
+            )}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setOpen(false)}
+          >
+            Solicitar demonstração
+          </a>
         </div>
         <button
           className={styles.menuButton}
@@ -174,6 +189,7 @@ function Footer({ variant }: { variant: MarketingVariant }) {
       <div>
         <Link href="/agencias">Agências</Link>
         <Link href="/imobiliarias">Imobiliárias</Link>
+        <Link href="/como-funciona">Como funciona</Link>
         <Link href="/precos">Preços</Link>
         <Link href="/login">Entrar</Link>
         <a href={salesWhatsAppUrl(context)} target="_blank" rel="noreferrer">
@@ -442,7 +458,9 @@ function HomePage() {
             </Link>
             <a
               className={styles.contactButton}
-              href={salesWhatsAppUrl("Quero entender qual fluxo RevFlow combina com a minha empresa.")}
+              href={salesWhatsAppUrl(
+                "Quero entender qual fluxo RevFlow combina com a minha empresa.",
+              )}
               target="_blank"
               rel="noreferrer"
             >
@@ -850,63 +868,492 @@ function NichePage({ niche }: { niche: "agency" | "real-estate" }) {
   );
 }
 
-function PricingPage() {
+function VerticalSelector({
+  value,
+  onChange,
+  label = "Escolha o fluxo",
+}: {
+  value: DemoVertical;
+  onChange: (value: DemoVertical) => void;
+  label?: string;
+}) {
   return (
-    <main className={`${styles.page} ${styles.pricingPage}`}>
+    <div className={styles.verticalSelector}>
+      <span>{label}</span>
+      <div role="tablist" aria-label={label}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={value === "agency"}
+          onClick={() => onChange("agency")}
+        >
+          Para Agências
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={value === "real-estate"}
+          onClick={() => onChange("real-estate")}
+        >
+          Para Imobiliárias
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HowItWorksPage() {
+  const [vertical, setVertical] = useState<DemoVertical>("agency");
+  const realEstate = vertical === "real-estate";
+  const flow = realEstate
+    ? [
+        ["Novo lead", "O interesse entra no fluxo com origem e responsável."],
+        [
+          "Perfil identificado",
+          "Preferências e faixa de investimento ficam registradas.",
+        ],
+        [
+          "Imóvel recomendado",
+          "O atendimento ganha opções compatíveis e contexto.",
+        ],
+        ["Visita", "Agenda, imóvel e oportunidade permanecem relacionados."],
+        ["Proposta", "A negociação avança com histórico e próxima ação."],
+        ["Contrato", "O resultado preserva toda a jornada comercial."],
+      ]
+    : [
+        ["Novo lead", "O interesse entra no fluxo com origem e responsável."],
+        ["Qualificação", "Serviço, contexto e urgência ficam visíveis."],
+        ["Reunião", "O compromisso passa a integrar o histórico comercial."],
+        ["Proposta", "A negociação avança sem perder decisões importantes."],
+        ["Projeto", "A passagem comercial mantém o contexto conquistado."],
+        ["Pós-venda", "O relacionamento continua depois do fechamento."],
+      ];
+  const pains = [
+    [
+      MessageCircleMore,
+      "Leads espalhados",
+      "Conversas importantes chegam por canais diferentes e perdem continuidade.",
+    ],
+    [
+      Clock3,
+      "Retornos esquecidos",
+      "Sem uma próxima ação clara, a oportunidade depende da memória da equipe.",
+    ],
+    [
+      CalendarCheck2,
+      "Agenda desconectada",
+      "Reuniões e visitas ficam distantes do histórico da negociação.",
+    ],
+    [
+      Route,
+      "Gestão sem contexto",
+      "A liderança precisa procurar informações antes de conseguir decidir.",
+    ],
+  ] as const;
+  const integrations = [
+    [
+      CalendarCheck2,
+      "Google Calendar",
+      "Compromissos conectados ao fluxo comercial.",
+    ],
+    [
+      MessageCircle,
+      "WhatsApp",
+      "Conversas e acompanhamentos centralizados quando configurados.",
+    ],
+    [
+      BrainCircuit,
+      "OpenAI",
+      "Qualificação assistida com retorno validado pela aplicação.",
+    ],
+    [Clock3, "Calendly", "Agendamentos incorporados à rotina de atendimento."],
+  ] as const;
+
+  return (
+    <main
+      className={`${styles.page} ${styles.howPage} ${realEstate ? styles.publicEstateTheme : ""}`}
+    >
+      <Header active="how-it-works" />
+      <section className={styles.howHero}>
+        <div className={styles.gridBackdrop} />
+        <div className={styles.howHeroInner}>
+          <Reveal>
+            <Kicker>Como o RevFlow funciona</Kicker>
+            <h1>
+              Do primeiro contato à próxima ação,
+              <br />
+              <em>tudo dentro do mesmo fluxo.</em>
+            </h1>
+            <p>
+              O RevFlow organiza leads, responsáveis, reuniões, follow-ups e
+              negociações para sua equipe saber o que fazer agora.
+            </p>
+            <div className={styles.heroActions}>
+              <a className={styles.primaryButton} href="#demonstracao">
+                Ver demonstração <ArrowDownRight size={17} />
+              </a>
+              <Link className={styles.secondaryButton} href="/precos">
+                Conhecer os planos <ArrowRight size={17} />
+              </Link>
+            </div>
+          </Reveal>
+          <VerticalSelector value={vertical} onChange={setVertical} />
+        </div>
+      </section>
+
+      <section className={styles.howProblemSection}>
+        <Reveal>
+          <Kicker>Onde o processo perde força</Kicker>
+          <h2>
+            Oportunidade não deveria desaparecer
+            <br />
+            <em>entre uma conversa e outra.</em>
+          </h2>
+        </Reveal>
+        <div className={styles.howProblemGrid}>
+          {pains.map(([Icon, title, description], index) => (
+            <Reveal key={title} delay={index * 0.05}>
+              <article>
+                <Icon size={19} aria-hidden="true" />
+                <h3>{title}</h3>
+                <p>{description}</p>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.howFlowSection}>
+        <Reveal>
+          <Kicker>
+            {realEstate ? "Fluxo imobiliário" : "Fluxo para agências"}
+          </Kicker>
+          <h2>Uma etapa prepara a próxima.</h2>
+        </Reveal>
+        <div className={styles.howFlowLine}>
+          {flow.map(([title, description], index) => (
+            <article key={title} tabIndex={0}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <i />
+              <h3>{title}</h3>
+              <p>{description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="demonstracao" className={styles.demoSection}>
+        <div className={styles.demoHeading}>
+          <Reveal>
+            <Kicker>Veja antes de entrar</Kicker>
+            <h2>
+              Uma demonstração guiada,
+              <br />
+              <em>sem cadastro e sem dados reais.</em>
+            </h2>
+          </Reveal>
+          <p>
+            A experiência abaixo reproduz o fluxo com informações genéricas e
+            não grava nada no CRM.
+          </p>
+        </div>
+        <ProductDemo key={vertical} initialVertical={vertical} />
+      </section>
+
+      <section className={styles.publicIntegrationsSection}>
+        <Reveal>
+          <Kicker>Conectado à rotina</Kicker>
+          <h2>Menos troca de tela. Mais continuidade.</h2>
+        </Reveal>
+        <div className={styles.integrationCards}>
+          {integrations.map(([Icon, title, description], index) => (
+            <Reveal key={title} delay={index * 0.05}>
+              <article>
+                <span>
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <h3>{title}</h3>
+                <p>{description}</p>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+        <p className={styles.integrationDisclaimer}>
+          A disponibilidade de cada integração depende da configuração da conta
+          e das regras do respectivo provedor.
+        </p>
+      </section>
+
+      <section className={styles.howFinalCta}>
+        <div className={styles.ctaGlow} />
+        <Reveal>
+          <ShieldCheck size={25} aria-hidden="true" />
+          <h2>Seu processo comercial pode ser mais simples de acompanhar.</h2>
+          <p>
+            Organize o histórico, proteja o contexto e deixe a próxima ação
+            visível para quem precisa agir.
+          </p>
+          <div className={styles.homeActions}>
+            <a
+              className={styles.primaryButton}
+              href={salesWhatsAppUrl(
+                "Conheci o RevFlow e quero solicitar uma demonstração.",
+              )}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Solicitar demonstração <MessageCircle size={17} />
+            </a>
+            <a
+              className={styles.contactButton}
+              href={salesWhatsAppUrl(
+                "Conheci o RevFlow e quero falar sobre a minha operação.",
+              )}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Falar pelo WhatsApp
+            </a>
+            <Link className={styles.secondaryButton} href="/precos">
+              Ver preços <ArrowRight size={17} />
+            </Link>
+          </div>
+        </Reveal>
+      </section>
+      <Footer variant="how-it-works" />
+      <WhatsAppFloat variant="how-it-works" />
+    </main>
+  );
+}
+
+function PricingPage() {
+  const [vertical, setVertical] = useState<DemoVertical>("agency");
+  const realEstate = vertical === "real-estate";
+  const features = realEstate
+    ? [
+        "Leads, pipeline e histórico comercial",
+        "Cadastro e gestão de imóveis",
+        "Perfil imobiliário e matching",
+        "Visitas, agenda e Google Calendar",
+        "Follow-ups, tarefas e WhatsApp",
+        "Gestão por corretor e permissões",
+      ]
+    : [
+        "Leads, pipeline e histórico comercial",
+        "Clientes, propostas e projetos",
+        "Agenda, reuniões e Google Calendar",
+        "Follow-ups, tarefas e WhatsApp",
+        "Qualificação assistida por IA",
+        "Gestão de equipe e permissões",
+      ];
+  const faq = [
+    [
+      "Preciso instalar alguma coisa?",
+      "Não. O RevFlow funciona pelo navegador e a configuração da operação é feita com a equipe.",
+    ],
+    [
+      "Posso usar com minha equipe?",
+      "Sim. Usuários, responsáveis e permissões fazem parte da organização comercial.",
+    ],
+    [
+      "Posso conectar o Google Calendar?",
+      "Sim. A integração pode ser autorizada pela conta após a configuração do aplicativo Google.",
+    ],
+    [
+      "Existe uma versão para imobiliárias?",
+      "Sim. O fluxo imobiliário inclui imóveis, perfil do comprador, matching e visitas.",
+    ],
+    [
+      "Como funciona a demonstração?",
+      "Você conhece o fluxo primeiro e alinha a implantação com o time RevFlow antes de contratar.",
+    ],
+  ];
+
+  return (
+    <main
+      className={`${styles.page} ${styles.pricingPage} ${realEstate ? styles.publicEstateTheme : ""}`}
+    >
       <Header active="pricing" />
       <section className={styles.pricingHero}>
         <div className={styles.gridBackdrop} />
         <Reveal className={styles.pricingCopy}>
           <Kicker>Planos RevFlow</Kicker>
           <h1>
-            Um fluxo comercial claro.
+            Um plano comercial que acompanha
             <br />
-            <em>Um preço que você entende.</em>
+            <em>o crescimento da sua operação.</em>
           </h1>
           <p>
             Comece com o time que você já tem e escale conforme sua operação
             comercial cresce.
           </p>
         </Reveal>
+        <VerticalSelector value={vertical} onChange={setVertical} />
       </section>
       <section className={styles.pricingSection}>
+        <div className={styles.pricingPlans}>
+          {[
+            {
+              name: "Plano mensal",
+              price: "R$ 297",
+              cadence: "por empresa / mês",
+              note: "Assinatura mensal para operar o RevFlow com sua equipe.",
+              message: "Quero contratar o plano mensal do RevFlow por R$ 297.",
+              featured: false,
+            },
+            {
+              name: "Acesso vitalício",
+              price: "R$ 549,99",
+              cadence: "pagamento único",
+              note: "Acesso vitalício à versão contratada do RevFlow, sem mensalidade da plataforma.",
+              message:
+                "Quero contratar o acesso vitalício do RevFlow por R$ 549,99.",
+              featured: true,
+            },
+          ].map((plan) => (
+            <Reveal key={plan.name}>
+              <article
+                className={`${styles.pricingCard} ${plan.featured ? styles.pricingFeatured : ""}`}
+              >
+                <div>
+                  <Kicker>{plan.name}</Kicker>
+                  <h2>RevFlow {realEstate ? "Imobiliárias" : "Agências"}</h2>
+                  <p className={styles.pricingValue}>
+                    {plan.price} <small>{plan.cadence}</small>
+                  </p>
+                  <p className={styles.pricingNote}>{plan.note}</p>
+                </div>
+                <ul>
+                  {features.map((feature) => (
+                    <li key={feature}>
+                      <Check size={16} /> {feature}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  className={styles.primaryButton}
+                  href={salesWhatsAppUrl(plan.message)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Solicitar contratação <MessageCircle size={17} />
+                </a>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+        <p className={styles.pricingProviderNote}>
+          Custos de consumo da OpenAI, WhatsApp, Google e outros provedores não
+          estão incluídos. Integrações dependem de contas e aprovação dos
+          respectivos serviços.
+        </p>
+      </section>
+
+      <section className={styles.pricingDemoSection}>
+        <div className={styles.demoHeading}>
+          <Reveal>
+            <Kicker>Conheça antes de contratar</Kicker>
+            <h2>
+              Veja como o RevFlow organiza
+              <br />
+              <em>a próxima ação comercial.</em>
+            </h2>
+          </Reveal>
+          <p>
+            Esta demonstração é ilustrativa, não acessa sua conta e não grava
+            dados no sistema.
+          </p>
+        </div>
+        <ProductDemo
+          key={vertical}
+          initialVertical={vertical}
+          allowVerticalChange={false}
+          compact
+        />
+      </section>
+
+      <section className={styles.pricingTrustSection}>
         <Reveal>
-          <article className={styles.pricingCard}>
-            <div>
-              <Kicker>RevFlow Essencial</Kicker>
-              <h2>Para equipes que querem parar de perder contexto.</h2>
-              <p className={styles.pricingValue}>
-                R$ 97 <small>por usuário ativo / mês</small>
-              </p>
-              <p className={styles.pricingNote}>
-                Para agências e imobiliárias. Implantação e configuração das
-                integrações são alinhadas na demonstração.
-              </p>
-            </div>
-            <ul>
-              <li><Check size={16} /> Leads, pipeline e histórico comercial</li>
-              <li><Check size={16} /> Agenda, Google Calendar e tarefas</li>
-              <li><Check size={16} /> Follow-ups, qualificações e WhatsApp</li>
-              <li><Check size={16} /> Imóveis, visitas e matching para imobiliárias</li>
-            </ul>
+          <Kicker>Estrutura para operar em equipe</Kicker>
+          <h2>O contexto permanece com a organização.</h2>
+        </Reveal>
+        <div className={styles.trustGrid}>
+          {[
+            [
+              ShieldCheck,
+              "Dados por organização",
+              "O isolamento entre empresas é protegido pelas regras de acesso do banco.",
+            ],
+            [
+              Clock3,
+              "Histórico centralizado",
+              "Interações relevantes permanecem ligadas à oportunidade comercial.",
+            ],
+            [
+              UserRoundCheck,
+              "Responsáveis e permissões",
+              "A operação deixa claro quem acompanha cada próxima ação.",
+            ],
+          ].map(([Icon, title, description]) => {
+            const TrustIcon = Icon as typeof ShieldCheck;
+            return (
+              <article key={title as string}>
+                <TrustIcon size={20} aria-hidden="true" />
+                <h3>{title as string}</h3>
+                <p>{description as string}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className={styles.pricingFaq}>
+        <Reveal>
+          <Kicker>Dúvidas antes de começar</Kicker>
+          <h2>Informação clara, antes da decisão.</h2>
+        </Reveal>
+        <div className={styles.faqList}>
+          {faq.map(([question, answer]) => (
+            <details key={question}>
+              <summary>
+                {question}
+                <span>+</span>
+              </summary>
+              <p>{answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.pricingFinalCta}>
+        <Reveal>
+          <h2>Pronto para ver o RevFlow na sua operação?</h2>
+          <p>
+            Entenda a implantação, tire suas dúvidas e conheça o fluxo antes de
+            decidir.
+          </p>
+          <div className={styles.homeActions}>
             <a
               className={styles.primaryButton}
-              href={salesWhatsAppUrl("Quero conhecer os planos e solicitar uma demonstração do RevFlow.")}
+              href={salesWhatsAppUrl(
+                "Conheci o RevFlow e quero solicitar uma demonstração.",
+              )}
               target="_blank"
               rel="noreferrer"
             >
               Solicitar demonstração <MessageCircle size={17} />
             </a>
-          </article>
-        </Reveal>
-      </section>
-      <section className={styles.pricingFaq}>
-        <Reveal>
-          <h2>Sem cobrança automática nesta etapa.</h2>
-          <p>
-            Você conversa com o time RevFlow, entende a implantação e só então
-            decide se o fluxo faz sentido para sua operação.
-          </p>
+            <a
+              className={styles.contactButton}
+              href={salesWhatsAppUrl(
+                "Conheci o RevFlow e quero falar sobre os planos.",
+              )}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Falar pelo WhatsApp
+            </a>
+          </div>
         </Reveal>
       </section>
       <Footer variant="pricing" />
@@ -917,6 +1364,7 @@ function PricingPage() {
 
 export function MarketingPage({ variant }: { variant: MarketingVariant }) {
   if (variant === "home") return <HomePage />;
+  if (variant === "how-it-works") return <HowItWorksPage />;
   if (variant === "pricing") return <PricingPage />;
   return <NichePage niche={variant} />;
 }

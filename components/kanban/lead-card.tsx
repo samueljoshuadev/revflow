@@ -2,7 +2,13 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowUpRight, CalendarClock, GripVertical } from "lucide-react";
+import {
+  ArrowUpRight,
+  CalendarClock,
+  GripVertical,
+  LoaderCircle,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 
 import { cn, formatCurrency, formatRelativeDate, initials } from "@/lib/utils";
@@ -25,9 +31,13 @@ const priorityLabels = {
 export function LeadCard({
   lead,
   overlay = false,
+  automationPending = false,
+  onAutomate,
 }: {
   lead: BoardLead;
   overlay?: boolean;
+  automationPending?: boolean;
+  onAutomate?: (leadId: string) => void;
 }) {
   const {
     attributes,
@@ -39,7 +49,7 @@ export function LeadCard({
   } = useSortable({
     id: `lead:${lead.id}`,
     data: { type: "lead", leadId: lead.id, stageId: lead.stage_id },
-    disabled: overlay,
+    disabled: overlay || automationPending,
   });
 
   return (
@@ -122,6 +132,24 @@ export function LeadCard({
           )}
         </Link>
       </div>
+      {!overlay && onAutomate && (
+        <button
+          type="button"
+          onClick={() => onAutomate(lead.id)}
+          disabled={automationPending}
+          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-violet-100 bg-violet-50/70 px-2.5 py-2 text-[10px] font-semibold text-violet-700 transition hover:border-violet-200 hover:bg-violet-100 disabled:cursor-wait disabled:opacity-60"
+          aria-label={`Qualificar ${lead.name} com inteligência artificial`}
+        >
+          {automationPending ? (
+            <LoaderCircle className="size-3 animate-spin" />
+          ) : (
+            <Sparkles className="size-3" />
+          )}
+          {automationPending
+            ? "Analisando com IA..."
+            : "Qualificar e atualizar Kanban"}
+        </button>
+      )}
     </article>
   );
 }

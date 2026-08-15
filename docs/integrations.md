@@ -13,7 +13,7 @@ estado `connected` só é persistido depois de uma chamada real ao provedor.
 - [x] Credenciais AES-256-GCM; somente ciphertext entra no PostgreSQL.
 - [x] Google OAuth com `state`, PKCE, refresh token e teste do Calendar.
 - [x] Criação, atualização e cancelamento de eventos Google sem bloquear a agenda interna quando o provedor falha.
-- [x] OpenAI com teste real, limite mensal, Structured Outputs, validação Zod, qualificação manual/automática e aplicação transacional no lead.
+- [x] OpenAI com teste real, limite mensal, Structured Outputs, validação Zod, qualificação manual/automática e avanço seguro do Kanban na mesma transação.
 - [x] WhatsApp com teste real do número, verificação de webhook, assinatura do corpo bruto, limite de payload, idempotência, histórico e envio na janela de atendimento.
 - [x] Calendly com Personal Access Token criptografado e teste real de conta.
 - [ ] OAuth público e webhooks assinados do Calendly. Exigem um OAuth App do proprietário da plataforma; não há endpoint inseguro ou simulado.
@@ -41,7 +41,17 @@ No Google Cloud, habilite Calendar API e cadastre exatamente a URI de callback. 
 
 Cada organização pode cadastrar sua própria chave pela interface. Como opção de plataforma, `OPENAI_API_KEY` funciona como fallback server-only. O modelo e o limite mensal ficam em configuração não sensível; a chave nunca é devolvida.
 
-A análise usa a Responses API com JSON Schema estrito e ainda passa por Zod. `apply_lead_ai_analysis` grava a análise, atualiza a projeção de `leads` e cria o evento `lead_analyzed` na mesma transação.
+A análise usa a Responses API com JSON Schema estrito e ainda passa por Zod. `apply_lead_ai_analysis_and_advance` grava a análise, atualiza a projeção de `leads` e cria o evento `lead_analyzed` na mesma transação. Com score mínimo 60, a regra revisada pode avançar somente até `qualificado` em agências ou `perfil-identificado` em imobiliárias com perfil completo. A OpenAI não escolhe IDs de etapa e nunca fecha ou perde um negócio.
+
+O teste isolado da API pode ser executado sem acessar dados reais de clientes:
+
+```bash
+npm run test:openai
+```
+
+Sem `OPENAI_API_KEY`, o comando informa `SKIP`; com a chave, realiza uma chamada
+real, exige Structured Output e valida os campos essenciais sem imprimir a
+credencial.
 
 ## WhatsApp Cloud API
 
