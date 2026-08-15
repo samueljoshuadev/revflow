@@ -41,24 +41,14 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: #17203a;
-  font-size: 20px;
-  font-weight: 730;
-  letter-spacing: -0.065em;
+  width: 142px;
+  height: 40px;
 }
-.brand > span:last-child > span {
-  color: var(--violet);
-}
-.brandSymbol {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  place-items: center;
-  border-radius: 9px;
-  background: linear-gradient(135deg, #8d7efc, #5442d6);
-  color: #fff;
-  box-shadow: 0 7px 15px rgba(86, 67, 220, 0.23);
+.brandImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
 }
 .navLinks {
   display: flex;
@@ -1043,13 +1033,6 @@
 .estatePage .activeLink,
 .estatePage .navLinks > a:not(.loginLink):hover {
   color: #a56604;
-}
-.estatePage .brand > span:last-child > span {
-  color: #c77b08;
-}
-.estatePage .brandSymbol {
-  background: linear-gradient(135deg, #f2bf41, #c47a05);
-  box-shadow: 0 7px 15px rgba(199, 123, 8, 0.25);
 }
 .estatePage .kicker {
   color: #a96705;

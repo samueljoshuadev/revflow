@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import {
@@ -14,7 +15,6 @@ import {
   Home,
   Menu,
   MessageCircleMore,
-  MoveUpRight,
   Route,
   ShieldCheck,
   Sparkles,
@@ -65,15 +65,22 @@ function Reveal({
   );
 }
 
-function BrandMark() {
+function BrandMark({ variant }: { variant: MarketingVariant }) {
+  const isRealEstate = variant === "real-estate";
+
   return (
     <span className={styles.brand}>
-      <span className={styles.brandSymbol}>
-        <MoveUpRight size={17} strokeWidth={2.5} />
-      </span>
-      <span>
-        Rev<span>Flow</span>
-      </span>
+      <Image
+        src={
+          isRealEstate
+            ? "/revflow-imobiliarias.png"
+            : "/revflow-agencias.png"
+        }
+        alt={isRealEstate ? "RevFlow para Imobiliárias" : "RevFlow"}
+        width={177}
+        height={50}
+        className={styles.brandImage}
+      />
     </span>
   );
 }
@@ -84,7 +91,7 @@ function Header({ active }: { active: MarketingVariant }) {
     <header className={styles.header}>
       <nav className={styles.nav} aria-label="Navegação principal">
         <Link href="/" aria-label="Página inicial RevFlow">
-          <BrandMark />
+          <BrandMark variant={active} />
         </Link>
         <div
           className={`${styles.navLinks} ${open ? styles.navLinksOpen : ""}`}
@@ -137,10 +144,10 @@ function Kicker({ children }: { children: ReactNode }) {
   );
 }
 
-function Footer() {
+function Footer({ variant }: { variant: MarketingVariant }) {
   return (
     <footer className={styles.footer}>
-      <BrandMark />
+      <BrandMark variant={variant} />
       <div>
         <Link href="/agencias">Agências</Link>
         <Link href="/imobiliarias">Imobiliárias</Link>
@@ -389,7 +396,7 @@ function HomePage() {
           </div>
         </Reveal>
       </section>
-      <Footer />
+      <Footer variant="home" />
     </main>
   );
 }
@@ -763,7 +770,7 @@ function NichePage({ niche }: { niche: "agency" | "real-estate" }) {
         </Reveal>
       </section>
       <NicheCta realEstate={realEstate} />
-      <Footer />
+      <Footer variant={realEstate ? "real-estate" : "agency"} />
     </main>
   );
 }
