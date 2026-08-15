@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { RealEstateLanding } from "@/components/imobiliarias/real-estate-landing";
+import { MarketingPage } from "@/components/marketing/revflow-marketing";
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -15,16 +15,9 @@ export const metadata: Metadata = {
   openGraph: {
     title: "RevFlow para Imobiliárias",
     description: "Cada lead merece virar uma visita.",
-    images: ["/og-imobiliarias.png"],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "RevFlow para Imobiliárias",
-    description: "Cada lead merece virar uma visita.",
-    images: ["/og-imobiliarias.png"],
   },
 };
 
 export default function RealEstatePage() {
-  return <RealEstateLanding />;
+  return <MarketingPage variant="real-estate" />;
 }

@@ -33,7 +33,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
   const isPublicRoute =
+    path === "/" ||
     path === "/login" ||
+    path === "/agencias" ||
     path === "/imobiliarias" ||
     path.startsWith("/auth/") ||
     path.startsWith("/book/") ||
