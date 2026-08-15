@@ -12,19 +12,10 @@ export type OrganizationVertical = "agency" | "real_estate";
 export type LeadPriority = "low" | "medium" | "high" | "urgent";
 export type PropertyStatus = "available" | "reserved" | "sold" | "inactive";
 export type PropertyType =
-  | "apartment"
-  | "house"
-  | "commercial"
-  | "land"
-  | "rural"
-  | "other";
+  "apartment" | "house" | "commercial" | "land" | "rural" | "other";
 export type PropertyPurpose = "sale" | "rent";
 export type PropertyMatchStatus =
-  | "recommended"
-  | "sent"
-  | "favorite"
-  | "rejected"
-  | "visit_scheduled";
+  "recommended" | "sent" | "favorite" | "rejected" | "visit_scheduled";
 
 type Organization = {
   id: string;
@@ -255,12 +246,7 @@ type RealEstateLeadProfile = {
   purpose: PropertyPurpose | null;
   minimum_bedrooms: number | null;
   payment_method:
-    | "cash"
-    | "financing"
-    | "consortium"
-    | "exchange"
-    | "other"
-    | null;
+    "cash" | "financing" | "consortium" | "exchange" | "other" | null;
   available_down_payment: number | null;
   urgency: "low" | "medium" | "high" | "immediate" | null;
   purchase_deadline: string | null;
@@ -729,6 +715,21 @@ export type Database = {
           p_output_tokens?: number | null;
         };
         Returns: string;
+      };
+      apply_lead_ai_analysis_and_advance: {
+        Args: {
+          p_organization_id: string;
+          p_lead_id: string;
+          p_model: string;
+          p_prompt_version: string;
+          p_schema_version: string;
+          p_result: Json;
+          p_target_stage_id: string | null;
+          p_automation_reason: string;
+          p_input_tokens?: number | null;
+          p_output_tokens?: number | null;
+        };
+        Returns: Json;
       };
     };
     Enums: {

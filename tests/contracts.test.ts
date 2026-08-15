@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { parseLocalDateTimeWithOffset } from "../lib/datetime";
+import { getKanbanAutomationDecision } from "../lib/kanban-automation";
 import { scorePropertyMatch } from "../lib/real-estate-matching";
 import { leadAnalysisSchema } from "../services/ai/schemas";
 import { webhookProviderSchema } from "../services/webhooks/contracts";
@@ -102,5 +103,93 @@ describe("critical boundary contracts", () => {
     expect(match.score).toBe(100);
     expect(match.reasons).toContain("cidade desejada");
     expect(match.reasons).toContain("na faixa de investimento");
+  });
+
+  it("advances an agency lead only to the reviewed qualification stage", () => {
+    const stages = [
+      {
+        id: "new",
+        name: "Novo lead",
+        slug: "novo-lead",
+        position: 0,
+        is_closed: false,
+      },
+      {
+        id: "qualified",
+        name: "Qualificado",
+        slug: "qualificado",
+        position: 3,
+        is_closed: false,
+      },
+      {
+        id: "won",
+        name: "Fechado",
+        slug: "fechado",
+        position: 7,
+        is_closed: true,
+      },
+    ];
+    const decision = getKanbanAutomationDecision({
+      vertical: "agency",
+      currentStage: stages[0],
+      stages,
+      analysis: leadAnalysisSchema.parse({
+        score: 82,
+        priority: "high",
+        temperature: "hot",
+        service: "Automação",
+        estimated_value: 12000,
+        intent: "Organizar o processo comercial",
+        urgency: "high",
+        budget_fit: "compatible",
+        reason: "Necessidade, prazo e orçamento informados.",
+        summary: "Lead com contexto suficiente para qualificação.",
+        next_action: "Agendar diagnóstico.",
+      }),
+      hasCompleteRealEstateProfile: false,
+    });
+    expect(decision?.targetStageId).toBe("qualified");
+  });
+
+  it("keeps the Kanban unchanged for low confidence or incomplete real-estate profile", () => {
+    const newStage = {
+      id: "new",
+      name: "Novo lead",
+      slug: "novo-lead",
+      position: 0,
+      is_closed: false,
+    };
+    const stages = [
+      newStage,
+      {
+        id: "profile",
+        name: "Perfil identificado",
+        slug: "perfil-identificado",
+        position: 1,
+        is_closed: false,
+      },
+    ];
+    const analysis = leadAnalysisSchema.parse({
+      score: 59,
+      priority: "medium",
+      temperature: "warm",
+      service: "Imóvel",
+      estimated_value: null,
+      intent: "Pesquisar opções",
+      urgency: "low",
+      budget_fit: "unknown",
+      reason: "Contexto insuficiente.",
+      summary: "Lead ainda precisa informar o perfil.",
+      next_action: "Confirmar orçamento e região.",
+    });
+    expect(
+      getKanbanAutomationDecision({
+        vertical: "real_estate",
+        currentStage: newStage,
+        stages,
+        analysis,
+        hasCompleteRealEstateProfile: false,
+      }),
+    ).toBeNull();
   });
 });
