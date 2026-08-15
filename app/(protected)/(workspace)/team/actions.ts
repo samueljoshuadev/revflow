@@ -25,8 +25,11 @@ export async function createInvitation(formData: FormData) {
     .safeParse({
       email: formData.get("email"),
       role: formData.get("role"),
-    });
+  });
   if (!parsed.success) redirect("/team?error=Revise+o+e-mail+e+a+permissão.");
+  if (parsed.data.role === "owner" && organization.role !== "owner") {
+    redirect("/team?error=Somente+um+proprietário+pode+convidar+outro+proprietário.");
+  }
 
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
@@ -54,19 +57,25 @@ export async function createInvitation(formData: FormData) {
 }
 
 export async function updateMemberRole(formData: FormData) {
-  const { organization } = await requireWorkspace();
+  const { user, organization } = await requireWorkspace();
   requireAdmin(organization.role);
   const parsed = z.object({ userId: z.uuid(), role: roleSchema }).safeParse({
     userId: formData.get("userId"),
     role: formData.get("role"),
   });
   if (!parsed.success) return;
+  if (parsed.data.userId === user.id) {
+    redirect("/team?error=Você+não+pode+alterar+a+própria+permissão.");
+  }
+  if (parsed.data.role === "owner" && organization.role !== "owner") {
+    redirect("/team?error=Somente+um+proprietário+pode+conceder+acesso+de+proprietário.");
+  }
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("organization_members")
-    .update({ role: parsed.data.role })
-    .eq("organization_id", organization.id)
-    .eq("user_id", parsed.data.userId);
+  const { error } = await supabase.rpc("update_organization_member_role", {
+    p_organization_id: organization.id,
+    p_user_id: parsed.data.userId,
+    p_role: parsed.data.role,
+  });
   if (error)
     redirect(
       `/team?error=${encodeURIComponent(error.message.includes("owner") ? "A organização precisa manter ao menos um proprietário." : "Não foi possível alterar a permissão.")}`,
@@ -80,11 +89,10 @@ export async function removeMember(formData: FormData) {
   const parsed = z.uuid().safeParse(formData.get("userId"));
   if (!parsed.success || parsed.data === user.id) return;
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("organization_members")
-    .delete()
-    .eq("organization_id", organization.id)
-    .eq("user_id", parsed.data);
+  const { error } = await supabase.rpc("remove_organization_member", {
+    p_organization_id: organization.id,
+    p_user_id: parsed.data,
+  });
   if (error) redirect("/team?error=Não+foi+possível+remover+o+membro.");
   revalidatePath("/team");
 }

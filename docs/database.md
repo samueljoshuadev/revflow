@@ -81,3 +81,8 @@ Helpers privados `is_org_member`, `can_write_org` e `is_org_admin` evitam duplic
 `202608130001_initial_crm.sql` cria a fundação. A migration incremental
 `202608140001_phase_2_operations.sql` adiciona a camada operacional. Nunca edite
 uma migration aplicada; gere outra com timestamp posterior.
+## Confiabilidade e permissões comerciais
+
+A migration `202608150002_reliability_security_and_commercial.sql` substitui quatro constraints `UNIQUE NULLS NOT DISTINCT` por índices parciais. Registros manuais não possuem identificador externo, portanto reuniões, clientes, projetos e mensagens podem ser criados repetidamente sem abrir mão da proteção contra duplicidade de identificadores externos ou da relação proposta-projeto.
+
+Alterações de papel e remoção de membros passam exclusivamente pelas funções transacionais `update_organization_member_role` e `remove_organization_member`. Somente owner administra acesso owner; ninguém altera o próprio papel. Mensagens de WhatsApp são criadas por `queue_whatsapp_outbound_message`, que valida organização, opt-out e janela de atendimento antes da chamada externa à Meta.

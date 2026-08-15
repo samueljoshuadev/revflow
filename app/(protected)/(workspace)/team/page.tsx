@@ -106,7 +106,9 @@ export default async function TeamPage({
                         defaultValue={member.role}
                         className="h-8 w-36 text-xs"
                       >
-                        <option value="owner">Proprietário</option>
+                        {organization.role === "owner" && (
+                          <option value="owner">Proprietário</option>
+                        )}
                         <option value="admin">Administrador</option>
                         <option value="manager">Gestor</option>
                         <option value="member">Vendedor</option>

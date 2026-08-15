@@ -57,3 +57,6 @@ Produtores internos transacionais não precisam de chave externa. Webhooks devem
 ## Evolução
 
 Metadados de evento devem ter schema versionado no produtor quando passarem a dirigir automações. Consumidores desconhecidos ignoram campos adicionais. Mudanças incompatíveis usam nova versão ou novo `event_type`.
+## Operação e autorização
+
+As mudanças de papel de membros são eventos de auditoria operacional, não fatos de lead. O envio de WhatsApp começa como uma mensagem `queued`; a atualização para `sent` ou `failed` é feita pelo adaptador server-side após a resposta da Meta. Não registre conteúdo de mensagens, tokens ou dados de integração em logs de aplicação.

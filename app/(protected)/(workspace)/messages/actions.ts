@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { getIntegrationCredential } from "@/services/integrations/credentials";
 import { requireWorkspace } from "@/services/workspace";
 
@@ -21,30 +22,53 @@ export async function sendWhatsAppMessage(formData: FormData) {
   });
   if (!parsed.success) return;
   const returnPath = `/messages?conversation=${parsed.data.conversationId}`;
+  const supabase = await createClient();
+  const { data: conversation } = await supabase
+    .from("conversations")
+    .select("id, external_contact_id, opt_out_at")
+    .eq("organization_id", organization.id)
+    .eq("id", parsed.data.conversationId)
+    .maybeSingle();
+  if (!conversation || conversation.opt_out_at) {
+    redirect(
+      `${returnPath}&error=${encodeURIComponent("Esta conversa não possui permissão para receber mensagens.")}`,
+    );
+  }
+
   const admin = createAdminClient();
   const graphVersion = process.env.META_GRAPH_API_VERSION;
-  if (!admin || !graphVersion) redirect(`${returnPath}&error=${encodeURIComponent("O envio ainda não foi ativado pelo responsável da plataforma.")}`);
-
-  const { data: conversation } = await admin.from("conversations").select("id, external_contact_id, opt_out_at").eq("organization_id", organization.id).eq("id", parsed.data.conversationId).maybeSingle();
-  if (!conversation || conversation.opt_out_at) redirect(`${returnPath}&error=${encodeURIComponent("Esta conversa não possui permissão para receber mensagens.")}`);
-  const { data: lastInbound } = await admin.from("messages").select("sent_at, created_at").eq("organization_id", organization.id).eq("conversation_id", conversation.id).eq("direction", "inbound").order("created_at", { ascending: false }).limit(1).maybeSingle();
-  const lastInboundAt = new Date(lastInbound?.sent_at ?? lastInbound?.created_at ?? 0).getTime();
-  if (Date.now() - lastInboundAt > 24 * 60 * 60 * 1000) {
-    redirect(`${returnPath}&error=${encodeURIComponent("A janela de atendimento terminou. Envie um template aprovado pela Meta.")}`);
+  if (!admin || !graphVersion) {
+    redirect(
+      `${returnPath}&error=${encodeURIComponent("O envio ainda não foi ativado pelo responsável da plataforma.")}`,
+    );
   }
-  const credential = await getIntegrationCredential<WhatsAppCredential>(organization.id, "whatsapp", admin);
-  if (!credential) redirect(`${returnPath}&error=${encodeURIComponent("Reconecte o WhatsApp antes de enviar.")}`);
+  const credential = await getIntegrationCredential<WhatsAppCredential>(
+    organization.id,
+    "whatsapp",
+    admin,
+  );
+  if (!credential) {
+    redirect(
+      `${returnPath}&error=${encodeURIComponent("Reconecte o WhatsApp antes de enviar.")}`,
+    );
+  }
 
-  const { data: localMessage, error: insertError } = await admin.from("messages").insert({
-    organization_id: organization.id,
-    conversation_id: conversation.id,
-    direction: "outbound",
-    status: "queued",
-    message_type: "text",
-    body: parsed.data.body,
-    metadata: {},
-  }).select("id").single();
-  if (insertError || !localMessage) redirect(`${returnPath}&error=${encodeURIComponent("Não foi possível preparar a mensagem.")}`);
+  const { data: localMessageId, error: queueError } = await supabase.rpc(
+    "queue_whatsapp_outbound_message",
+    {
+      p_organization_id: organization.id,
+      p_conversation_id: conversation.id,
+      p_body: parsed.data.body,
+    },
+  );
+  if (queueError || !localMessageId) {
+    const message = queueError?.message.includes("window")
+      ? "A janela de atendimento terminou. Envie um template aprovado pela Meta."
+      : queueError?.message.includes("Access denied")
+        ? "Você não tem permissão para enviar mensagens."
+        : "Não foi possível preparar a mensagem.";
+    redirect(`${returnPath}&error=${encodeURIComponent(message)}`);
+  }
 
   try {
     const response = await fetch(`https://graph.facebook.com/${graphVersion}/${credential.phoneNumberId}/messages`, {
@@ -56,10 +80,10 @@ export async function sendWhatsAppMessage(formData: FormData) {
     });
     if (!response.ok) throw new Error(`whatsapp_send_http_${response.status}`);
     const result = (await response.json()) as { messages?: Array<{ id?: string }> };
-    await admin.from("messages").update({ status: "sent", external_id: result.messages?.[0]?.id ?? null, sent_at: new Date().toISOString() }).eq("organization_id", organization.id).eq("id", localMessage.id);
+    await admin.from("messages").update({ status: "sent", external_id: result.messages?.[0]?.id ?? null, sent_at: new Date().toISOString() }).eq("organization_id", organization.id).eq("id", localMessageId);
   } catch (error) {
     const code = error instanceof Error ? error.message.slice(0, 100) : "whatsapp_send_failed";
-    await admin.from("messages").update({ status: "failed", failed_at: new Date().toISOString(), error_code: code }).eq("organization_id", organization.id).eq("id", localMessage.id);
+    await admin.from("messages").update({ status: "failed", failed_at: new Date().toISOString(), error_code: code }).eq("organization_id", organization.id).eq("id", localMessageId);
     redirect(`${returnPath}&error=${encodeURIComponent("A Meta não aceitou o envio. Revise a integração e tente novamente.")}`);
   }
   revalidatePath("/messages");

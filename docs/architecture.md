@@ -70,3 +70,6 @@ O Supabase Auth emite a sessão. `proxy.ts` renova cookies e protege rotas. O on
 4. Qualificação OpenAI com structured outputs, aprovação humana e versionamento de prompt/modelo.
 5. Meta/Google Ads, atribuição e relatórios; seleção de organização e billing para SaaS.
 6. Paginação/virtualização por coluna, busca full-text e observabilidade para alto volume.
+## Limites críticos de autorização
+
+Fluxos que mudam permissões da equipe e criam mensagens de WhatsApp não dependem apenas de Server Actions. Eles são impostos por funções PostgreSQL `security definer` com `search_path` fixo, autorização baseada em `auth.uid()` e grants mínimos. A action apenas valida o formulário, chama a fronteira transacional e revalida a interface.

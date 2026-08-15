@@ -4,13 +4,17 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
+  BrainCircuit,
+  CalendarDays,
   Check,
   CheckCircle2,
   Circle,
+  Clock3,
   Copy,
   ExternalLink,
   HelpCircle,
   Link2,
+  MessageCircle,
   Settings2,
   ShieldCheck,
   TestTube2,
@@ -52,6 +56,20 @@ const statusStyles: Record<IntegrationCardData["status"], string> = {
   revoked: "bg-red-50 text-red-700 ring-red-200",
   disconnected: "bg-gray-50 text-gray-600 ring-gray-200",
 };
+
+function ProviderIcon({ provider }: { provider: IntegrationProvider }) {
+  const iconClass = "size-5";
+  switch (provider) {
+    case "google_calendar":
+      return <CalendarDays className={iconClass} aria-hidden="true" />;
+    case "whatsapp":
+      return <MessageCircle className={iconClass} aria-hidden="true" />;
+    case "openai":
+      return <BrainCircuit className={iconClass} aria-hidden="true" />;
+    case "calendly":
+      return <Clock3 className={iconClass} aria-hidden="true" />;
+  }
+}
 
 export function IntegrationCenter({
   cards,
@@ -166,8 +184,14 @@ function IntegrationCard({
     <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
-          <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-1", card.accent)}>
-            {card.shortName}
+          <span
+            className={cn(
+              "flex size-11 shrink-0 items-center justify-center rounded-xl ring-1",
+              card.accent,
+            )}
+            aria-label={card.name}
+          >
+            <ProviderIcon provider={card.provider} />
           </span>
           <div className="min-w-0">
             <h3 className="font-semibold text-gray-950">{card.name}</h3>

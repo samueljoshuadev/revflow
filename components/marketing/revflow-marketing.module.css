@@ -78,6 +78,46 @@
   border-color: rgba(114, 96, 239, 0.42);
   background: #fff;
 }
+.contactButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 17px;
+  border: 1px solid rgba(21, 32, 59, 0.14);
+  border-radius: 10px;
+  background: #fff;
+  color: #26334b;
+  font-size: 13px;
+  font-weight: 700;
+}
+.contactButton:hover {
+  border-color: rgba(114, 96, 239, 0.38);
+  color: #5140cf;
+}
+.whatsAppFloat {
+  position: fixed;
+  z-index: 20;
+  right: 20px;
+  bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 17px;
+  border-radius: 999px;
+  background: #128c4f;
+  box-shadow: 0 14px 28px rgba(11, 78, 43, 0.24);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 720;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.whatsAppFloat:hover {
+  background: #087a42;
+  transform: translateY(-2px);
+}
 .menuButton {
   display: none;
   border: 0;
@@ -984,6 +1024,127 @@
   color: #4d3aca;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
 }
+.pricingHero {
+  position: relative;
+  overflow: hidden;
+  padding: 166px clamp(22px, 5vw, 72px) 72px;
+  background: linear-gradient(145deg, #fbfbff 5%, #f3f0ff 100%);
+}
+.pricingCopy,
+.pricingSection,
+.pricingFaq {
+  position: relative;
+  z-index: 1;
+  max-width: 1240px;
+  margin-right: auto;
+  margin-left: auto;
+}
+.pricingCopy {
+  max-width: 760px;
+}
+.pricingCopy h1 {
+  margin-top: 19px;
+  font-size: clamp(43px, 5.2vw, 72px);
+  font-weight: 640;
+  letter-spacing: -0.075em;
+  line-height: 0.95;
+}
+.pricingCopy h1 em {
+  color: var(--violet);
+  font-style: normal;
+}
+.pricingCopy p {
+  max-width: 540px;
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+.pricingSection {
+  padding: 52px clamp(22px, 5vw, 72px) 72px;
+}
+.pricingCard {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 40px;
+  align-items: end;
+  max-width: 900px;
+  padding: clamp(28px, 5vw, 54px);
+  border: 1px solid rgba(87, 70, 205, 0.22);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 52px rgba(55, 43, 141, 0.11);
+}
+.pricingCard h2 {
+  max-width: 490px;
+  margin-top: 17px;
+  font-size: clamp(24px, 3vw, 35px);
+  letter-spacing: -0.055em;
+}
+.pricingValue {
+  margin-top: 26px;
+  color: #1f2a45;
+  font-size: 40px;
+  font-weight: 730;
+  letter-spacing: -0.06em;
+}
+.pricingValue small {
+  display: inline-block;
+  max-width: 140px;
+  margin-left: 9px;
+  color: #667287;
+  font-size: 12px;
+  font-weight: 550;
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+.pricingNote {
+  max-width: 500px;
+  margin-top: 15px;
+  color: #69758a;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.pricingCard ul {
+  display: grid;
+  gap: 13px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.pricingCard li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #46536a;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.pricingCard li svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #5e4bdd;
+}
+.pricingCard > .primaryButton {
+  grid-column: 2;
+  justify-self: start;
+  margin-top: -18px;
+}
+.pricingFaq {
+  padding: 52px clamp(22px, 5vw, 72px) 92px;
+  border-top: 1px solid var(--line);
+}
+.pricingFaq h2 {
+  font-size: clamp(25px, 3vw, 37px);
+  letter-spacing: -0.055em;
+}
+.pricingFaq p {
+  max-width: 540px;
+  margin-top: 13px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
 .footer {
   display: flex;
   align-items: center;
@@ -1340,6 +1501,23 @@
   .homeActions a,
   .heroActions a {
     width: 100%;
+  }
+  .whatsAppFloat span {
+    display: none;
+  }
+  .whatsAppFloat {
+    right: 16px;
+    bottom: 16px;
+    width: 48px;
+    padding: 0;
+    justify-content: center;
+  }
+  .pricingCard {
+    grid-template-columns: 1fr;
+  }
+  .pricingCard > .primaryButton {
+    grid-column: auto;
+    margin-top: 0;
   }
   .footer {
     align-items: flex-start;

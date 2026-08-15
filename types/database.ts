@@ -584,6 +584,26 @@ export type Database = {
         Args: { p_token: string };
         Returns: string;
       };
+      update_organization_member_role: {
+        Args: {
+          p_organization_id: string;
+          p_user_id: string;
+          p_role: OrganizationRole;
+        };
+        Returns: undefined;
+      };
+      remove_organization_member: {
+        Args: { p_organization_id: string; p_user_id: string };
+        Returns: undefined;
+      };
+      queue_whatsapp_outbound_message: {
+        Args: {
+          p_organization_id: string;
+          p_conversation_id: string;
+          p_body: string;
+        };
+        Returns: string;
+      };
       update_lead_details: {
         Args: {
           p_organization_id: string;
