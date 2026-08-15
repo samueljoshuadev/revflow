@@ -42,7 +42,7 @@ export async function createMeeting(formData: FormData) {
     location: formData.get("location") ?? "",
     notifyLeadByEmail: formData.get("notifyLeadByEmail") === "on",
   });
-  if (!parsed.success) redirect("/calendar?error=Revise+os+dados+da+reuniÃ£o.");
+  if (!parsed.success) redirect("/calendar?error=Revise+os+dados+da+reunião.");
   let startsAt: Date;
   try {
     startsAt = parseLocalDateTimeWithOffset(
@@ -50,7 +50,7 @@ export async function createMeeting(formData: FormData) {
       parsed.data.utcOffset,
     );
   } catch {
-    redirect("/calendar?error=Data+ou+fuso+horÃ¡rio+invÃ¡lido.");
+    redirect("/calendar?error=Data+ou+fuso+horário+inválido.");
   }
   const endsAt = new Date(startsAt.getTime() + parsed.data.duration * 60_000);
 
@@ -83,8 +83,8 @@ export async function createMeeting(formData: FormData) {
   if (error) {
     console.error("meeting_creation_failed", { code: error.code });
     const message = error.message.includes("conflict")
-      ? "Esse+horÃ¡rio+jÃ¡+estÃ¡+ocupado."
-      : "NÃ£o+foi+possÃ­vel+agendar+a+reuniÃ£o.";
+      ? "Esse+horário+já+está+ocupado."
+      : "Não+foi+possível+agendar+a+reunião.";
     redirect(`/calendar?error=${message}`);
   }
   let message = "Reunião+agendada.";
@@ -138,5 +138,3 @@ export async function updateMeetingStatus(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/visits");
 }
-
-
