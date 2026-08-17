@@ -56,18 +56,20 @@ export function LeadCard({
     <article
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
+      {...attributes}
+      {...listeners}
       className={cn(
-        "group rounded-xl border border-gray-200/90 bg-white p-3.5 shadow-xs transition-shadow hover:shadow-md hover:shadow-gray-200/60",
+        "group cursor-grab rounded-xl border border-gray-200/90 bg-white p-3.5 shadow-xs transition-shadow hover:shadow-md hover:shadow-gray-200/60 active:cursor-grabbing",
         isDragging && "opacity-30",
         overlay && "w-[286px] rotate-2 shadow-xl",
       )}
     >
       <div className="flex items-start gap-2">
         <button
+          type="button"
           className="-ml-1 cursor-grab rounded p-1 text-gray-300 opacity-0 transition group-hover:opacity-100 hover:bg-gray-50 hover:text-gray-500 active:cursor-grabbing focus:opacity-100"
           aria-label={`Mover ${lead.name}`}
-          {...attributes}
-          {...listeners}
+          tabIndex={-1}
         >
           <GripVertical className="size-3.5" />
         </button>
