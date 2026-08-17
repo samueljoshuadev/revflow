@@ -84,14 +84,7 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
     setActiveLeadId(null);
     const leadId = event.active.data.current?.leadId;
     const fromStageId = event.active.data.current?.stageId;
-    const overStageId = event.over?.data.current?.stageId;
-    const overId = String(event.over?.id ?? "");
-    const toStageId =
-      typeof overStageId === "string"
-        ? overStageId
-        : overId.startsWith("stage:")
-          ? overId.replace("stage:", "")
-          : null;
+    const toStageId = resolveDropStageId(event, stages);
 
     if (
       typeof leadId !== "string" ||
@@ -266,7 +259,7 @@ function KanbanColumn({
       <div
         ref={setNodeRef}
         className={cn(
-          "min-h-[180px] space-y-2.5 rounded-xl border border-transparent p-1.5 transition-colors",
+          "min-h-[260px] space-y-2.5 rounded-xl border border-transparent p-1.5 transition-colors",
           isOver && "border-violet-200 bg-violet-50/50",
         )}
       >
@@ -291,6 +284,28 @@ function KanbanColumn({
       </div>
     </section>
   );
+}
+
+function resolveDropStageId(event: DragEndEvent, stages: BoardStage[]) {
+  const over = event.over;
+  if (!over) return null;
+
+  const data = over.data.current;
+  if (typeof data?.stageId === "string") return data.stageId;
+
+  const overId = String(over.id);
+  if (overId.startsWith("stage:")) return overId.slice("stage:".length);
+
+  if (overId.startsWith("lead:")) {
+    const overLeadId = overId.slice("lead:".length);
+    return (
+      stages.find((stage) =>
+        stage.leads.some((lead) => lead.id === overLeadId),
+      )?.id ?? null
+    );
+  }
+
+  return null;
 }
 
 function moveLocally(

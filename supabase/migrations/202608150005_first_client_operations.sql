@@ -251,7 +251,7 @@ create or replace function public.import_lead_batch(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_import_id uuid;
@@ -422,7 +422,7 @@ create or replace function public.capture_external_lead(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_source public.lead_capture_sources%rowtype;
