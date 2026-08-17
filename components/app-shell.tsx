@@ -171,6 +171,12 @@ export function AppShell({
       </nav>
       <div className="space-y-1 border-t border-gray-100 p-3">
         <Link
+          href="/notifications"
+          className="flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+        >
+          <Bell className="size-[17px]" /> Notificações
+        </Link>
+        <Link
           href="/team"
           className="flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-900"
         >
@@ -266,7 +272,9 @@ export function AppShell({
             <input
               name="q"
               className="h-9 w-full rounded-lg border-0 bg-gray-100/80 pr-16 pl-9 text-sm placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-violet-200"
-              placeholder={isRealEstate ? "Buscar imóveis..." : "Buscar leads..."}
+              placeholder={
+                isRealEstate ? "Buscar imóveis..." : "Buscar leads..."
+              }
               aria-label={isRealEstate ? "Buscar imóveis" : "Buscar leads"}
             />
             <kbd className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[9px] text-gray-400">

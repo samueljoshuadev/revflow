@@ -106,9 +106,10 @@ export async function createLead(formData: FormData) {
     try {
       await qualifyLeadWithOpenAi(organization.id, lead.id);
     } catch (qualificationError) {
-      const code = qualificationError instanceof Error
-        ? qualificationError.message.slice(0, 100)
-        : "ai_analysis_failed";
+      const code =
+        qualificationError instanceof Error
+          ? qualificationError.message.slice(0, 100)
+          : "ai_analysis_failed";
       console.error("automatic_lead_qualification_failed", { code });
     }
   }
@@ -277,7 +278,76 @@ export async function qualifyLead(formData: FormData) {
   revalidatePath(`/leads/${leadId.data}`);
   revalidatePath("/leads");
   revalidatePath("/pipeline");
-  redirect(`/leads/${leadId.data}?message=${encodeURIComponent("Lead qualificado com IA.")}`);
+  redirect(
+    `/leads/${leadId.data}?message=${encodeURIComponent("Lead qualificado com IA.")}`,
+  );
+}
+
+export async function scheduleNextAction(formData: FormData) {
+  const { organization } = await requireWorkspace();
+  const parsed = z
+    .object({
+      leadId: z.uuid(),
+      action: z.string().trim().min(2).max(500),
+      dueAt: z.coerce.date(),
+    })
+    .safeParse({
+      leadId: formData.get("leadId"),
+      action: formData.get("action"),
+      dueAt: formData.get("dueAt"),
+    });
+  const fallback = String(formData.get("leadId") ?? "");
+  if (!parsed.success)
+    redirect(`/leads/${fallback}?error=Informe+a+ação+e+uma+data+válida.`);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_lead_next_action", {
+    p_organization_id: organization.id,
+    p_lead_id: parsed.data.leadId,
+    p_action: parsed.data.action,
+    p_due_at: parsed.data.dueAt.toISOString(),
+  });
+  if (error) {
+    console.error("next_action_schedule_failed", { code: error.code });
+    redirect(
+      `/leads/${parsed.data.leadId}?error=Não+foi+possível+programar+a+próxima+ação.`,
+    );
+  }
+  revalidatePath(`/leads/${parsed.data.leadId}`);
+  revalidatePath("/leads");
+  revalidatePath("/dashboard");
+  redirect(`/leads/${parsed.data.leadId}?message=Próxima+ação+programada.`);
+}
+
+export async function clearNextAction(formData: FormData) {
+  const { organization } = await requireWorkspace();
+  const parsed = z
+    .object({
+      leadId: z.uuid(),
+      outcome: z.enum(["completed", "cancelled"]),
+    })
+    .safeParse({
+      leadId: formData.get("leadId"),
+      outcome: formData.get("outcome"),
+    });
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("clear_lead_next_action", {
+    p_organization_id: organization.id,
+    p_lead_id: parsed.data.leadId,
+    p_outcome: parsed.data.outcome,
+  });
+  if (error) {
+    console.error("next_action_clear_failed", { code: error.code });
+    redirect(
+      `/leads/${parsed.data.leadId}?error=Não+foi+possível+atualizar+a+próxima+ação.`,
+    );
+  }
+  revalidatePath(`/leads/${parsed.data.leadId}`);
+  revalidatePath("/leads");
+  revalidatePath("/dashboard");
+  redirect(
+    `/leads/${parsed.data.leadId}?message=${parsed.data.outcome === "completed" ? "Próxima+ação+concluída." : "Próxima+ação+cancelada."}`,
+  );
 }
 
 const nullableProfileNumber = (schema: z.ZodNumber) =>
@@ -286,38 +356,49 @@ const nullableProfileNumber = (schema: z.ZodNumber) =>
     z.coerce.number().pipe(schema).nullable(),
   );
 
-const realEstateProfileSchema = z.object({
-  leadId: z.uuid(),
-  budgetMin: nullableProfileNumber(z.number().min(0).max(999_999_999_999)),
-  budgetMax: nullableProfileNumber(z.number().min(0).max(999_999_999_999)),
-  preferredCity: optionalText(120),
-  preferredNeighborhood: optionalText(120),
-  propertyType: z.preprocess(
-    (value) => (value === "" ? null : value),
-    z.enum(["apartment", "house", "commercial", "land", "rural", "other"]).nullable(),
-  ),
-  purpose: z.preprocess(
-    (value) => (value === "" ? null : value),
-    z.enum(["sale", "rent"]).nullable(),
-  ),
-  minimumBedrooms: nullableProfileNumber(z.number().int().min(0).max(100)),
-  paymentMethod: z.preprocess(
-    (value) => (value === "" ? null : value),
-    z.enum(["cash", "financing", "consortium", "exchange", "other"]).nullable(),
-  ),
-  availableDownPayment: nullableProfileNumber(z.number().min(0).max(999_999_999_999)),
-  urgency: z.preprocess(
-    (value) => (value === "" ? null : value),
-    z.enum(["low", "medium", "high", "immediate"]).nullable(),
-  ),
-  purchaseDeadline: z.preprocess(
-    (value) => (value === "" ? null : value),
-    z.string().date().nullable(),
-  ),
-}).refine(
-  (data) => data.budgetMin === null || data.budgetMax === null || data.budgetMax >= data.budgetMin,
-  { message: "Faixa de orçamento inválida" },
-);
+const realEstateProfileSchema = z
+  .object({
+    leadId: z.uuid(),
+    budgetMin: nullableProfileNumber(z.number().min(0).max(999_999_999_999)),
+    budgetMax: nullableProfileNumber(z.number().min(0).max(999_999_999_999)),
+    preferredCity: optionalText(120),
+    preferredNeighborhood: optionalText(120),
+    propertyType: z.preprocess(
+      (value) => (value === "" ? null : value),
+      z
+        .enum(["apartment", "house", "commercial", "land", "rural", "other"])
+        .nullable(),
+    ),
+    purpose: z.preprocess(
+      (value) => (value === "" ? null : value),
+      z.enum(["sale", "rent"]).nullable(),
+    ),
+    minimumBedrooms: nullableProfileNumber(z.number().int().min(0).max(100)),
+    paymentMethod: z.preprocess(
+      (value) => (value === "" ? null : value),
+      z
+        .enum(["cash", "financing", "consortium", "exchange", "other"])
+        .nullable(),
+    ),
+    availableDownPayment: nullableProfileNumber(
+      z.number().min(0).max(999_999_999_999),
+    ),
+    urgency: z.preprocess(
+      (value) => (value === "" ? null : value),
+      z.enum(["low", "medium", "high", "immediate"]).nullable(),
+    ),
+    purchaseDeadline: z.preprocess(
+      (value) => (value === "" ? null : value),
+      z.string().date().nullable(),
+    ),
+  })
+  .refine(
+    (data) =>
+      data.budgetMin === null ||
+      data.budgetMax === null ||
+      data.budgetMax >= data.budgetMin,
+    { message: "Faixa de orçamento inválida" },
+  );
 
 export async function saveRealEstateLeadProfile(formData: FormData) {
   const { user, organization } = await requireWorkspace();
@@ -337,7 +418,8 @@ export async function saveRealEstateLeadProfile(formData: FormData) {
     purchaseDeadline: formData.get("purchaseDeadline"),
   });
   const fallbackLeadId = String(formData.get("leadId") ?? "");
-  if (!parsed.success) redirect(`/leads/${fallbackLeadId}?error=Revise+o+perfil+imobiliário.`);
+  if (!parsed.success)
+    redirect(`/leads/${fallbackLeadId}?error=Revise+o+perfil+imobiliário.`);
   const supabase = await createClient();
   const { error } = await supabase.from("real_estate_lead_profiles").upsert(
     {
@@ -360,7 +442,9 @@ export async function saveRealEstateLeadProfile(formData: FormData) {
   );
   if (error) {
     console.error("real_estate_profile_save_failed", { code: error.code });
-    redirect(`/leads/${parsed.data.leadId}?error=Não+foi+possível+salvar+o+perfil.`);
+    redirect(
+      `/leads/${parsed.data.leadId}?error=Não+foi+possível+salvar+o+perfil.`,
+    );
   }
   revalidatePath(`/leads/${parsed.data.leadId}`);
   redirect(`/leads/${parsed.data.leadId}?message=Perfil+imobiliário+salvo.`);
@@ -369,14 +453,24 @@ export async function saveRealEstateLeadProfile(formData: FormData) {
 export async function recommendProperty(formData: FormData) {
   const { user, organization } = await requireWorkspace();
   if (organization.vertical !== "real_estate") return;
-  const parsed = z.object({ leadId: z.uuid(), propertyId: z.uuid() }).safeParse({
-    leadId: formData.get("leadId"),
-    propertyId: formData.get("propertyId"),
-  });
+  const parsed = z
+    .object({ leadId: z.uuid(), propertyId: z.uuid() })
+    .safeParse({
+      leadId: formData.get("leadId"),
+      propertyId: formData.get("propertyId"),
+    });
   if (!parsed.success) return;
-  const recommendations = await getDeterministicMatches(organization.id, parsed.data.leadId);
-  const recommendation = recommendations.find((item) => item.property.id === parsed.data.propertyId);
-  if (!recommendation) redirect(`/leads/${parsed.data.leadId}?error=Este+imóvel+não+atende+aos+critérios+atuais.`);
+  const recommendations = await getDeterministicMatches(
+    organization.id,
+    parsed.data.leadId,
+  );
+  const recommendation = recommendations.find(
+    (item) => item.property.id === parsed.data.propertyId,
+  );
+  if (!recommendation)
+    redirect(
+      `/leads/${parsed.data.leadId}?error=Este+imóvel+não+atende+aos+critérios+atuais.`,
+    );
   const supabase = await createClient();
   const { error } = await supabase.from("property_matches").upsert(
     {
@@ -392,7 +486,9 @@ export async function recommendProperty(formData: FormData) {
   );
   if (error) {
     console.error("property_recommendation_failed", { code: error.code });
-    redirect(`/leads/${parsed.data.leadId}?error=Não+foi+possível+salvar+a+recomendação.`);
+    redirect(
+      `/leads/${parsed.data.leadId}?error=Não+foi+possível+salvar+a+recomendação.`,
+    );
   }
   revalidatePath(`/leads/${parsed.data.leadId}`);
   revalidatePath(`/properties/${parsed.data.propertyId}`);
@@ -403,15 +499,23 @@ export async function recommendProperty(formData: FormData) {
 export async function updatePropertyMatchStatus(formData: FormData) {
   const { organization } = await requireWorkspace();
   if (organization.vertical !== "real_estate") return;
-  const parsed = z.object({
-    leadId: z.uuid(),
-    matchId: z.uuid(),
-    status: z.enum(["recommended", "sent", "favorite", "rejected", "visit_scheduled"]),
-  }).safeParse({
-    leadId: formData.get("leadId"),
-    matchId: formData.get("matchId"),
-    status: formData.get("status"),
-  });
+  const parsed = z
+    .object({
+      leadId: z.uuid(),
+      matchId: z.uuid(),
+      status: z.enum([
+        "recommended",
+        "sent",
+        "favorite",
+        "rejected",
+        "visit_scheduled",
+      ]),
+    })
+    .safeParse({
+      leadId: formData.get("leadId"),
+      matchId: formData.get("matchId"),
+      status: formData.get("status"),
+    });
   if (!parsed.success) return;
   const supabase = await createClient();
   const { error } = await supabase
@@ -420,6 +524,7 @@ export async function updatePropertyMatchStatus(formData: FormData) {
     .eq("organization_id", organization.id)
     .eq("lead_id", parsed.data.leadId)
     .eq("id", parsed.data.matchId);
-  if (error) console.error("property_match_status_failed", { code: error.code });
+  if (error)
+    console.error("property_match_status_failed", { code: error.code });
   revalidatePath(`/leads/${parsed.data.leadId}`);
 }

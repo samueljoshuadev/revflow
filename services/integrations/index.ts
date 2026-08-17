@@ -55,30 +55,59 @@ function buildChecklist(
   if (provider === "google_calendar") {
     return [
       { label: "Conta autorizada", done: hasCredential },
-      { label: "Calendário selecionado", done: Boolean(asRecord(connection?.config ?? {}).calendar_id) },
+      {
+        label: "Calendário selecionado",
+        done: Boolean(asRecord(connection?.config ?? {}).calendar_id),
+      },
       { label: "Teste realizado", done: tested },
-      { label: "Sincronização ativada", done: connected && asRecord(connection?.config ?? {}).sync_enabled === true },
+      {
+        label: "Sincronização ativada",
+        done:
+          connected && asRecord(connection?.config ?? {}).sync_enabled === true,
+      },
     ];
   }
   if (provider === "whatsapp") {
+    const config = asRecord(connection?.config ?? {});
+    const embedded = config.onboarding_method === "meta_embedded_signup";
     return [
-      { label: "Credenciais protegidas", done: hasCredential },
+      {
+        label: embedded ? "Conta Meta autorizada" : "Credenciais protegidas",
+        done: hasCredential,
+      },
       { label: "Número validado", done: tested && connected },
-      { label: "Webhook confirmado", done: Boolean(connection?.last_event_at) },
-      { label: "Primeiro evento recebido", done: Boolean(connection?.last_event_at) },
+      {
+        label: "Webhook ativado",
+        done:
+          config.webhook_subscribed === true ||
+          Boolean(connection?.last_event_at),
+      },
+      {
+        label: "Primeiro evento recebido",
+        done: Boolean(connection?.last_event_at),
+      },
     ];
   }
   if (provider === "openai") {
     return [
-      { label: "Chave protegida", done: hasCredential || Boolean(process.env.OPENAI_API_KEY) },
-      { label: "Modelo escolhido", done: Boolean(asRecord(connection?.config ?? {}).model) },
+      {
+        label: "Chave protegida",
+        done: hasCredential || Boolean(process.env.OPENAI_API_KEY),
+      },
+      {
+        label: "Modelo escolhido",
+        done: Boolean(asRecord(connection?.config ?? {}).model),
+      },
       { label: "Teste realizado", done: tested },
       { label: "Qualificação disponível", done: connected },
     ];
   }
   return [
     { label: "Token protegido", done: hasCredential },
-    { label: "Conta identificada", done: Boolean(connection?.external_account_id) },
+    {
+      label: "Conta identificada",
+      done: Boolean(connection?.external_account_id),
+    },
     { label: "Teste realizado", done: tested },
     { label: "Sincronização disponível", done: connected },
   ];
@@ -109,7 +138,10 @@ export async function getIntegrationCenter(organizationId: string) {
     connectionsResult.data.map((item) => [item.provider, item]),
   );
   const hints = new Map(
-    (credentialsResult.data ?? []).map((item) => [item.provider, item.secret_hint]),
+    (credentialsResult.data ?? []).map((item) => [
+      item.provider,
+      item.secret_hint,
+    ]),
   );
 
   const cards: IntegrationCardData[] = integrationCatalog.map((definition) => {
@@ -129,7 +161,11 @@ export async function getIntegrationCenter(organizationId: string) {
       lastEventAt: connection?.last_event_at ?? null,
       lastErrorCode: connection?.last_error_code ?? null,
       diagnosticId: connection?.diagnostic_id ?? null,
-      checklist: buildChecklist(definition.provider, connection, Boolean(secretHint)),
+      checklist: buildChecklist(
+        definition.provider,
+        connection,
+        Boolean(secretHint),
+      ),
     };
   });
 

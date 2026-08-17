@@ -38,6 +38,7 @@ const settingsSchema = z.object({
   bookingBuffer: z.coerce.number().int().min(0).max(120),
   meetingLocation: nullableText(300),
   bookingEnabled: z.boolean(),
+  lossReasons: z.array(z.string().trim().min(2).max(100)).max(20),
 });
 
 export async function updateOrganizationSettings(formData: FormData) {
@@ -61,6 +62,10 @@ export async function updateOrganizationSettings(formData: FormData) {
     bookingBuffer: formData.get("bookingBuffer"),
     meetingLocation: formData.get("meetingLocation"),
     bookingEnabled: formData.get("bookingEnabled") === "on",
+    lossReasons: String(formData.get("lossReasons") ?? "")
+      .split(/\r?\n/)
+      .map((value) => value.trim())
+      .filter(Boolean),
   });
   if (!parsed.success || parsed.data.workdayEnd <= parsed.data.workdayStart) {
     redirect("/settings?error=Revise+os+campos+e+o+horário+de+atendimento.");
@@ -73,6 +78,12 @@ export async function updateOrganizationSettings(formData: FormData) {
     ]),
   );
   const supabase = await createClient();
+  const currentSettings =
+    organization.settings &&
+    typeof organization.settings === "object" &&
+    !Array.isArray(organization.settings)
+      ? organization.settings
+      : {};
   const { error } = await supabase
     .from("organizations")
     .update({
@@ -88,6 +99,10 @@ export async function updateOrganizationSettings(formData: FormData) {
       booking_buffer_minutes: parsed.data.bookingBuffer,
       meeting_location: parsed.data.meetingLocation,
       booking_enabled: parsed.data.bookingEnabled,
+      settings: {
+        ...currentSettings,
+        loss_reasons: [...new Set(parsed.data.lossReasons)],
+      },
     })
     .eq("id", organization.id);
   if (error) {

@@ -19,9 +19,17 @@ export default async function IntegrationsPage({
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const googleOAuthReady = Boolean(
     process.env.GOOGLE_CLIENT_ID &&
-      process.env.GOOGLE_CLIENT_SECRET &&
-      process.env.GOOGLE_REDIRECT_URI &&
-      center.vaultConfigured,
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_REDIRECT_URI &&
+    center.vaultConfigured,
+  );
+  const metaWhatsAppReady = Boolean(
+    process.env.META_APP_ID &&
+    process.env.META_APP_SECRET &&
+    process.env.META_WHATSAPP_CONFIGURATION_ID &&
+    process.env.META_GRAPH_API_VERSION &&
+    process.env.META_WEBHOOK_VERIFY_TOKEN &&
+    center.vaultConfigured,
   );
 
   return (
@@ -30,15 +38,25 @@ export default async function IntegrationsPage({
         eyebrow="Configuração simples"
         title="Central de Integrações"
         description="Conecte as ferramentas da sua empresa, acompanhe o progresso e resolva pendências em um só lugar."
-        actions={<span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"><PlugZap className="size-4 text-brand" /> {organization.name}</span>}
+        actions={
+          <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600">
+            <PlugZap className="size-4 text-brand" /> {organization.name}
+          </span>
+        }
       />
       {(params.error || params.message) && (
-        <p role="status" className={`mt-6 rounded-xl border px-4 py-3 text-sm ${params.error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+        <p
+          role="status"
+          className={`mt-6 rounded-xl border px-4 py-3 text-sm ${params.error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
+        >
           {params.error ?? params.message}
         </p>
       )}
       {!canAdmin && (
-        <p className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">Você pode acompanhar o estado das integrações. Somente proprietários e administradores podem alterá-las.</p>
+        <p className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          Você pode acompanhar o estado das integrações. Somente proprietários e
+          administradores podem alterá-las.
+        </p>
       )}
       <IntegrationCenter
         cards={center.cards}
@@ -46,6 +64,7 @@ export default async function IntegrationsPage({
         vaultConfigured={center.vaultConfigured}
         migrationReady={center.migrationReady}
         googleOAuthReady={googleOAuthReady}
+        metaWhatsAppReady={metaWhatsAppReady}
         appUrl={appUrl}
       />
     </div>

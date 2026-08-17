@@ -413,8 +413,8 @@ export function RealEstateLanding() {
           <p>RevFlow para Imobiliárias.</p>
         </div>
         <nav aria-label="Links institucionais">
-          <a href="#privacidade">Privacidade</a>
-          <a href="#termos">Termos</a>
+          <a href="/privacidade">Privacidade</a>
+          <a href="/termos">Termos</a>
           <a href="#demonstracao">Contato</a>
         </nav>
       </footer>

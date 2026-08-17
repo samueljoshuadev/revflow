@@ -6,27 +6,32 @@ A migration `202608150001_real_estate_vertical.sql` adiciona `organizations.vert
 
 ## Schema implementado
 
-| Tabela                          | Responsabilidade                                   |
-| ------------------------------- | -------------------------------------------------- |
-| `profiles`                      | Perfil público mínimo vinculado a `auth.users`.    |
-| `organizations`                 | Tenant e configurações isoladas.                   |
-| `organization_members`          | Usuário, organização e papel (`owner` a `viewer`). |
-| `pipelines` / `pipeline_stages` | Definição ordenada do funil.                       |
-| `services`                      | Catálogo de serviços da organização.               |
-| `leads`                         | Projeção atual e campos comerciais pesquisáveis.   |
-| `lead_events`                   | Histórico append-only dos eventos de negócio.      |
-| `lead_notes`                    | Notas colaborativas; inserção também gera evento.  |
-| `tags` / `lead_tags`            | Catálogo e relação N:N com leads.                  |
-| `meetings`                      | Agenda interna e IDs externos futuros.             |
-| `webhook_events`                | Inbox idempotente para integrações futuras.        |
-| `audit_logs`                    | Valores antes/depois de alterações do lead.        |
-| `organization_invitations`      | Convites com token armazenado somente como hash.   |
-| `tasks`                         | Follow-ups, lembretes e execução comercial.        |
-| `clients` / `proposals`         | Receita, itens e relacionamento com o cliente.     |
-| `projects`                      | Entrega e pós-venda.                               |
-| `ai_analyses`                   | Qualificação versionada e revisável.               |
-| `integration_connections`       | Estado e referência server-only das integrações.   |
-| `conversations` / `messages`    | Histórico normalizado do WhatsApp.                 |
+| Tabela                                      | Responsabilidade                                      |
+| ------------------------------------------- | ----------------------------------------------------- |
+| `profiles`                                  | Perfil público mínimo vinculado a `auth.users`.       |
+| `organizations`                             | Tenant e configurações isoladas.                      |
+| `organization_members`                      | Usuário, organização e papel (`owner` a `viewer`).    |
+| `pipelines` / `pipeline_stages`             | Definição ordenada do funil.                          |
+| `services`                                  | Catálogo de serviços da organização.                  |
+| `leads`                                     | Projeção atual e campos comerciais pesquisáveis.      |
+| `lead_events`                               | Histórico append-only dos eventos de negócio.         |
+| `lead_notes`                                | Notas colaborativas; inserção também gera evento.     |
+| `tags` / `lead_tags`                        | Catálogo e relação N:N com leads.                     |
+| `meetings`                                  | Agenda interna e IDs externos futuros.                |
+| `webhook_events`                            | Inbox idempotente para integrações futuras.           |
+| `audit_logs`                                | Valores antes/depois de alterações do lead.           |
+| `organization_invitations`                  | Convites com token armazenado somente como hash.      |
+| `tasks`                                     | Follow-ups, lembretes e execução comercial.           |
+| `clients` / `proposals`                     | Receita, itens e relacionamento com o cliente.        |
+| `projects`                                  | Entrega e pós-venda.                                  |
+| `ai_analyses`                               | Qualificação versionada e revisável.                  |
+| `integration_connections`                   | Estado e referência server-only das integrações.      |
+| `conversations` / `messages`                | Histórico normalizado do WhatsApp.                    |
+| `lead_imports` / `lead_import_items`        | Resumo idempotente de importações, sem arquivo bruto. |
+| `lead_capture_sources`                      | Formulários e webhooks com configuração por tenant.   |
+| `follow_up_rules` / `lead_follow_up_states` | Regras e estado de acompanhamento.                    |
+| `notifications` / `notification_outbox`     | Inbox do usuário e fila server-only de e-mail.        |
+| `kanban_automation_rules`                   | Destinos determinísticos por evento comercial.        |
 
 ## Relacionamentos
 
@@ -92,3 +97,12 @@ Alterações de papel e remoção de membros passam exclusivamente pelas funçõ
 `apply_lead_ai_analysis_and_advance`. Ela revalida organização, score, origem e
 destino da etapa no banco antes de gravar análise, projeção e eventos. A função
 aceita somente as transições de qualificação documentadas em `docs/events.md`.
+
+`202608150004_meta_embedded_signup.sql` cria um índice parcial único sobre o
+WhatsApp Phone Number ID. Assim, o webhook compartilhado da Meta nunca pode
+resolver o mesmo número para duas organizações diferentes.
+
+`202608150005_first_client_operations.sql` adiciona identidade normalizada do
+lead, importação CSV idempotente, captação pública autenticada, follow-ups,
+notificações e automações determinísticas de reunião/proposta. Arquivos CSV não
+são persistidos; somente contagens e status por número de linha permanecem.

@@ -18,6 +18,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EventTimeline } from "@/components/leads/event-timeline";
+import { NextActionForm } from "@/components/leads/next-action-form";
 import { LeadRealEstatePanel } from "@/components/real-estate/lead-real-estate-panel";
 import { Textarea } from "@/components/ui/field";
 import { cn, formatCurrency, initials } from "@/lib/utils";
@@ -49,7 +50,7 @@ export async function generateMetadata({
 
 const priorityLabels = {
   low: "Baixa",
-  medium: "MÃ©dia",
+  medium: "Média",
   high: "Alta",
   urgent: "Urgente",
 };
@@ -60,7 +61,10 @@ const priorityStyles = {
   urgent: "bg-red-50 text-red-700",
 };
 
-export default async function LeadPage({ params, searchParams }: LeadPageProps) {
+export default async function LeadPage({
+  params,
+  searchParams,
+}: LeadPageProps) {
   const { id } = await params;
   const notice = searchParams ? await searchParams : {};
   const { organization } = await requireWorkspace();
@@ -192,17 +196,27 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
             </div>
             <p className="mt-4 text-sm leading-7 text-gray-600">
               {lead.summary ||
-                "Ainda nÃ£o hÃ¡ um resumo registrado para este lead."}
+                "Ainda não há um resumo registrado para este lead."}
             </p>
             <div className="mt-5 flex items-start gap-3 rounded-lg bg-brand-soft/70 p-3.5">
               <CalendarClock className="mt-0.5 size-4 shrink-0 text-brand-dark" />
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-semibold tracking-wide text-brand-dark uppercase">
-                  PrÃ³xima aÃ§Ã£o
+                  Próxima ação
                 </p>
                 <p className="mt-1 text-xs font-medium text-gray-900">
-                  {lead.next_action || "Defina a prÃ³xima aÃ§Ã£o comercial"}
+                  {lead.next_action || "Defina a próxima ação comercial"}
                 </p>
+                {lead.next_action_at && (
+                  <p className="mt-1 text-[10px] text-gray-500">
+                    Prazo: {formatDate(lead.next_action_at)}
+                  </p>
+                )}
+                <NextActionForm
+                  leadId={lead.id}
+                  action={lead.next_action ?? ""}
+                  hasScheduledAction={Boolean(lead.next_action_at)}
+                />
                 <Link
                   href={`/calendar?leadId=${lead.id}`}
                   className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg bg-gray-950 px-3 text-xs font-medium text-white hover:bg-gray-800"
@@ -249,7 +263,7 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
                       {note.content}
                     </p>
                     <div className="mt-3 flex items-center justify-between text-[9px] text-gray-400">
-                      <span>{note.author_name || "UsuÃ¡rio"}</span>
+                      <span>{note.author_name || "Usuário"}</span>
                       <time dateTime={note.created_at}>
                         {formatDate(note.created_at)}
                       </time>
@@ -264,7 +278,7 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
             <div className="mb-6">
               <h2 className="text-sm font-semibold text-gray-900">Timeline</h2>
               <p className="mt-1 text-xs text-gray-400">
-                HistÃ³rico imutÃ¡vel de eventos deste lead
+                Histórico imutável de eventos deste lead
               </p>
             </div>
             <EventTimeline events={lead.events} />
@@ -278,7 +292,7 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
               <Detail
                 icon={Building2}
                 label="Empresa"
-                value={lead.company || "NÃ£o informada"}
+                value={lead.company || "Não informada"}
               />
               <Detail
                 icon={CircleDollarSign}
@@ -287,13 +301,13 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
               />
               <Detail
                 icon={Sparkles}
-                label="ServiÃ§o"
-                value={lead.service?.name || "NÃ£o informado"}
+                label="Serviço"
+                value={lead.service?.name || "Não informado"}
               />
               <Detail
                 icon={UserRound}
-                label="ResponsÃ¡vel"
-                value={lead.owner?.full_name || "Sem responsÃ¡vel"}
+                label="Responsável"
+                value={lead.owner?.full_name || "Sem responsável"}
               />
               <Detail
                 icon={Flag}
@@ -317,7 +331,7 @@ export default async function LeadPage({ params, searchParams }: LeadPageProps) 
               />
             </div>
             <p className="mt-2 text-[10px] text-gray-400">
-              Estado da anÃ¡lise: {lead.ai_status}
+              Estado da análise: {lead.ai_status}
             </p>
             <form action={qualifyLead} className="mt-4">
               <input type="hidden" name="leadId" value={lead.id} />
@@ -388,4 +402,3 @@ function formatDate(value: string) {
     minute: "2-digit",
   }).format(new Date(value));
 }
-

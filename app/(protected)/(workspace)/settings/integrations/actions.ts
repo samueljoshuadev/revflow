@@ -28,7 +28,7 @@ function go(kind: "message" | "error", message: string): never {
 
 async function requireAdmin() {
   const workspace = await requireWorkspace();
-  if (!['owner', 'admin'].includes(workspace.organization.role)) {
+  if (!["owner", "admin"].includes(workspace.organization.role)) {
     go("error", "Somente administradores podem alterar integrações.");
   }
   return workspace;
@@ -63,7 +63,8 @@ export async function saveOpenAi(formData: FormData) {
     monthlyLimit: formData.get("monthlyLimit"),
     automaticQualification: formData.get("automaticQualification") === "on",
   });
-  if (!parsed.success) go("error", "Revise a chave, o modelo e o limite mensal.");
+  if (!parsed.success)
+    go("error", "Revise a chave, o modelo e o limite mensal.");
 
   try {
     await saveIntegrationCredential(
@@ -78,7 +79,9 @@ export async function saveOpenAi(formData: FormData) {
       automatic_qualification: parsed.data.automaticQualification,
     });
   } catch (error) {
-    console.error("openai_configuration_failed", { code: safeErrorCode(error) });
+    console.error("openai_configuration_failed", {
+      code: safeErrorCode(error),
+    });
     go("error", configurationErrorMessage(error));
   }
   revalidatePath(returnPath);
@@ -100,7 +103,9 @@ export async function saveCalendly(formData: FormData) {
     );
     await saveConnection(organization.id, user.id, "calendly", {});
   } catch (error) {
-    console.error("calendly_configuration_failed", { code: safeErrorCode(error) });
+    console.error("calendly_configuration_failed", {
+      code: safeErrorCode(error),
+    });
     go("error", configurationErrorMessage(error));
   }
   revalidatePath(returnPath);
@@ -116,7 +121,8 @@ export async function saveWhatsApp(formData: FormData) {
     appSecret: formData.get("appSecret"),
     verifyToken: formData.get("verifyToken"),
   });
-  if (!parsed.success) go("error", "Revise os dados copiados do painel da Meta.");
+  if (!parsed.success)
+    go("error", "Revise os dados copiados do painel da Meta.");
   try {
     await saveIntegrationCredential(
       organization.id,
@@ -127,9 +133,13 @@ export async function saveWhatsApp(formData: FormData) {
     await saveConnection(organization.id, user.id, "whatsapp", {
       phone_number_id_suffix: parsed.data.phoneNumberId.slice(-4),
       business_account_configured: Boolean(parsed.data.businessAccountId),
+      onboarding_method: "manual",
+      webhook_mode: "connection",
     });
   } catch (error) {
-    console.error("whatsapp_configuration_failed", { code: safeErrorCode(error) });
+    console.error("whatsapp_configuration_failed", {
+      code: safeErrorCode(error),
+    });
     go("error", configurationErrorMessage(error));
   }
   revalidatePath(returnPath);
@@ -138,11 +148,18 @@ export async function saveWhatsApp(formData: FormData) {
 
 type OpenAiCredential = { apiKey: string };
 type CalendlyCredential = { accessToken: string };
-type WhatsAppCredential = { accessToken: string; phoneNumberId: string };
+type WhatsAppCredential = {
+  accessToken: string;
+  phoneNumberId: string;
+  businessAccountId?: string;
+  onboardingMethod?: string;
+};
 
 export async function testIntegration(formData: FormData) {
   const { organization, user } = await requireAdmin();
-  const provider = integrationProviderSchema.safeParse(formData.get("provider"));
+  const provider = integrationProviderSchema.safeParse(
+    formData.get("provider"),
+  );
   if (!provider.success) go("error", "Integração inválida.");
 
   const supabase = await createClient();
@@ -156,27 +173,49 @@ export async function testIntegration(formData: FormData) {
   try {
     let externalAccountId: string | null = null;
     if (provider.data === "openai") {
-      const stored = await getIntegrationCredential<OpenAiCredential>(organization.id, "openai");
+      const stored = await getIntegrationCredential<OpenAiCredential>(
+        organization.id,
+        "openai",
+      );
       const apiKey = stored?.apiKey ?? process.env.OPENAI_API_KEY;
       if (!apiKey) throw new Error("openai_key_missing");
       const config = asRecord(connection?.config);
-      const model = typeof config.model === "string" ? config.model : process.env.OPENAI_MODEL ?? "gpt-5.4-nano";
-      const response = await fetchWithTimeout(`https://api.openai.com/v1/models/${encodeURIComponent(model)}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
-      if (!response.ok) throw new Error(mapHttpError("openai", response.status));
+      const model =
+        typeof config.model === "string"
+          ? config.model
+          : (process.env.OPENAI_MODEL ?? "gpt-5.4-nano");
+      const response = await fetchWithTimeout(
+        `https://api.openai.com/v1/models/${encodeURIComponent(model)}`,
+        {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        },
+      );
+      if (!response.ok)
+        throw new Error(mapHttpError("openai", response.status));
       externalAccountId = model;
     } else if (provider.data === "calendly") {
-      const stored = await getIntegrationCredential<CalendlyCredential>(organization.id, "calendly");
+      const stored = await getIntegrationCredential<CalendlyCredential>(
+        organization.id,
+        "calendly",
+      );
       if (!stored) throw new Error("calendly_token_missing");
-      const response = await fetchWithTimeout("https://api.calendly.com/users/me", {
-        headers: { Authorization: `Bearer ${stored.accessToken}` },
-      });
-      if (!response.ok) throw new Error(mapHttpError("calendly", response.status));
-      const body = (await response.json()) as { resource?: { uri?: string; email?: string } };
+      const response = await fetchWithTimeout(
+        "https://api.calendly.com/users/me",
+        {
+          headers: { Authorization: `Bearer ${stored.accessToken}` },
+        },
+      );
+      if (!response.ok)
+        throw new Error(mapHttpError("calendly", response.status));
+      const body = (await response.json()) as {
+        resource?: { uri?: string; email?: string };
+      };
       externalAccountId = body.resource?.email ?? body.resource?.uri ?? null;
     } else if (provider.data === "whatsapp") {
-      const stored = await getIntegrationCredential<WhatsAppCredential>(organization.id, "whatsapp");
+      const stored = await getIntegrationCredential<WhatsAppCredential>(
+        organization.id,
+        "whatsapp",
+      );
       if (!stored) throw new Error("whatsapp_token_missing");
       const graphVersion = process.env.META_GRAPH_API_VERSION;
       if (!graphVersion) throw new Error("meta_graph_version_missing");
@@ -184,15 +223,19 @@ export async function testIntegration(formData: FormData) {
         `https://graph.facebook.com/${graphVersion}/${stored.phoneNumberId}?fields=display_phone_number,verified_name`,
         { headers: { Authorization: `Bearer ${stored.accessToken}` } },
       );
-      if (!response.ok) throw new Error(mapHttpError("whatsapp", response.status));
-      const body = (await response.json()) as { display_phone_number?: string; id?: string };
-      externalAccountId = body.display_phone_number ?? body.id ?? null;
+      if (!response.ok)
+        throw new Error(mapHttpError("whatsapp", response.status));
+      externalAccountId = stored.phoneNumberId;
     } else {
       const accessToken = await getGoogleAccessToken(organization.id);
-      const response = await fetchWithTimeout("https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!response.ok) throw new Error(mapHttpError("google", response.status));
+      const response = await fetchWithTimeout(
+        "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1",
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+      if (!response.ok)
+        throw new Error(mapHttpError("google", response.status));
       externalAccountId = "Google Calendar";
     }
 
@@ -212,9 +255,14 @@ export async function testIntegration(formData: FormData) {
           organization_id: organization.id,
           provider: provider.data,
           ...confirmed,
-          config: provider.data === "openai"
-            ? { model: process.env.OPENAI_MODEL ?? "gpt-5.4-nano", monthly_limit: 500, automatic_qualification: false }
-            : {},
+          config:
+            provider.data === "openai"
+              ? {
+                  model: process.env.OPENAI_MODEL ?? "gpt-5.4-nano",
+                  monthly_limit: 500,
+                  automatic_qualification: false,
+                }
+              : {},
           created_by: user.id,
         });
     if (error) throw error;
@@ -222,7 +270,10 @@ export async function testIntegration(formData: FormData) {
     const code = safeErrorCode(error);
     await supabase
       .from("integration_connections")
-      .update({ status: code.includes("expired") ? "expired" : "error", last_error_code: code })
+      .update({
+        status: code.includes("expired") ? "expired" : "error",
+        last_error_code: code,
+      })
       .eq("organization_id", organization.id)
       .eq("provider", provider.data);
     console.error("integration_test_failed", { provider: provider.data, code });
@@ -235,7 +286,9 @@ export async function testIntegration(formData: FormData) {
 
 export async function disconnectIntegration(formData: FormData) {
   const { organization } = await requireAdmin();
-  const provider = integrationProviderSchema.safeParse(formData.get("provider"));
+  const provider = integrationProviderSchema.safeParse(
+    formData.get("provider"),
+  );
   if (!provider.success) return;
   const supabase = await createClient();
   try {
@@ -255,7 +308,9 @@ export async function disconnectIntegration(formData: FormData) {
       .eq("organization_id", organization.id)
       .eq("provider", provider.data);
   } catch (error) {
-    console.error("integration_disconnect_failed", { code: safeErrorCode(error) });
+    console.error("integration_disconnect_failed", {
+      code: safeErrorCode(error),
+    });
     go("error", "Não foi possível desconectar agora. Tente novamente.");
   }
   revalidatePath(returnPath);
@@ -263,11 +318,17 @@ export async function disconnectIntegration(formData: FormData) {
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit) {
-  return fetch(url, { ...init, signal: AbortSignal.timeout(10_000), cache: "no-store" });
+  return fetch(url, {
+    ...init,
+    signal: AbortSignal.timeout(10_000),
+    cache: "no-store",
+  });
 }
 
 function mapHttpError(provider: string, status: number) {
@@ -278,21 +339,28 @@ function mapHttpError(provider: string, status: number) {
 }
 
 function safeErrorCode(error: unknown) {
-  if (error instanceof Error) return error.message.slice(0, 100).replace(/[^a-zA-Z0-9_-]/g, "_");
+  if (error instanceof Error)
+    return error.message.slice(0, 100).replace(/[^a-zA-Z0-9_-]/g, "_");
   return "unknown_error";
 }
 
 function configurationErrorMessage(error: unknown) {
   const code = safeErrorCode(error);
-  if (code.includes("vault")) return "O cofre seguro ainda não foi ativado pelo responsável da plataforma.";
-  if (code.includes("relation") || code.includes("column")) return "A atualização do banco da Central de Integrações ainda precisa ser aplicada.";
+  if (code.includes("vault"))
+    return "O cofre seguro ainda não foi ativado pelo responsável da plataforma.";
+  if (code.includes("relation") || code.includes("column"))
+    return "A atualização do banco da Central de Integrações ainda precisa ser aplicada.";
   return "Não foi possível proteger a configuração. Tente novamente.";
 }
 
 function friendlyError(code: string) {
-  if (code.includes("expired") || code.includes("401")) return "A credencial não foi aceita ou expirou. Gere uma nova e tente novamente.";
-  if (code.includes("permission")) return "A conta não concedeu a permissão necessária. Reconecte e autorize o acesso.";
-  if (code.includes("rate_limited")) return "O provedor está limitando testes no momento. Aguarde alguns minutos.";
-  if (code.includes("missing")) return "A configuração ainda está incompleta. Abra Configurar e revise os campos.";
+  if (code.includes("expired") || code.includes("401"))
+    return "A credencial não foi aceita ou expirou. Gere uma nova e tente novamente.";
+  if (code.includes("permission"))
+    return "A conta não concedeu a permissão necessária. Reconecte e autorize o acesso.";
+  if (code.includes("rate_limited"))
+    return "O provedor está limitando testes no momento. Aguarde alguns minutos.";
+  if (code.includes("missing"))
+    return "A configuração ainda está incompleta. Abra Configurar e revise os campos.";
   return "Não conseguimos confirmar a conexão. Revise os dados ou tente novamente mais tarde.";
 }
