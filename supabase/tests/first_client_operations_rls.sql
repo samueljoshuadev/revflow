@@ -34,8 +34,8 @@ where organization_id = 'c1000000-0000-0000-0000-000000000001' and slug = 'perdi
 insert into public.lead_capture_sources (
   organization_id, source_key, name, channel, source_label, token_hash, token_hint, created_by
 ) values
-  ('c1000000-0000-0000-0000-000000000001', 'site', 'Site A', 'webhook', 'Site', digest('token-a-abcdefghijklmnopqrstuvwxyz123', 'sha256'), 'z123', '41000000-0000-0000-0000-000000000001'),
-  ('c2000000-0000-0000-0000-000000000002', 'site', 'Site B', 'webhook', 'Site', digest('token-b-abcdefghijklmnopqrstuvwxyz123', 'sha256'), 'z123', '42000000-0000-0000-0000-000000000002');
+  ('c1000000-0000-0000-0000-000000000001', 'site', 'Site A', 'webhook', 'Site', extensions.digest('token-a-abcdefghijklmnopqrstuvwxyz123', 'sha256'), 'z123', '41000000-0000-0000-0000-000000000001'),
+  ('c2000000-0000-0000-0000-000000000002', 'site', 'Site B', 'webhook', 'Site', extensions.digest('token-b-abcdefghijklmnopqrstuvwxyz123', 'sha256'), 'z123', '42000000-0000-0000-0000-000000000002');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '41000000-0000-0000-0000-000000000001', true);
@@ -154,9 +154,9 @@ from finish() as t(line);
 reset role;
 select jsonb_build_object(
   'source_a_exists', (select count(*) = 1 from public.lead_capture_sources where organization_id = 'c1000000-0000-0000-0000-000000000001'),
-  'webhook_token_matches', (select encode(token_hash, 'hex') = encode(digest('token-a-abcdefghijklmnopqrstuvwxyz123', 'sha256'), 'hex') from public.lead_capture_sources where organization_id = 'c1000000-0000-0000-0000-000000000001' and source_key = 'site'),
+  'webhook_token_matches', (select encode(token_hash, 'hex') = encode(extensions.digest('token-a-abcdefghijklmnopqrstuvwxyz123', 'sha256'), 'hex') from public.lead_capture_sources where organization_id = 'c1000000-0000-0000-0000-000000000001' and source_key = 'site'),
   'source_b_unchanged', (select name = 'Site B' from public.lead_capture_sources where organization_id = 'c2000000-0000-0000-0000-000000000002' and source_key = 'site'),
-  'import_created_one', (select count(*) = 1 from public.leads where organization_id = 'c1000000-0000-0000-0000-000000000001'),
+  'leads_after_import_and_webhook', (select count(*) = 2 from public.leads where organization_id = 'c1000000-0000-0000-0000-000000000001'),
   'meeting_created', (select count(*) = 1 from public.meetings where organization_id = 'c1000000-0000-0000-0000-000000000001'),
   'meeting_scheduled_automation', (select count(*) = 1 from public.lead_events where organization_id = 'c1000000-0000-0000-0000-000000000001' and source = 'automation' and idempotency_key like 'meeting_scheduled:%'),
   'meeting_completed_automation', (select count(*) = 1 from public.lead_events where organization_id = 'c1000000-0000-0000-0000-000000000001' and source = 'automation' and idempotency_key like 'meeting_completed:%'),
