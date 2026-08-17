@@ -1,12 +1,41 @@
 import { describe, expect, it } from "vitest";
 
 import { parseLocalDateTimeWithOffset } from "../lib/datetime";
+import { createCsv, parseCsv } from "../lib/csv";
+import {
+  PayloadTooLargeError,
+  readLimitedJson,
+} from "../lib/http/read-limited-json";
 import { getKanbanAutomationDecision } from "../lib/kanban-automation";
+import { parseMetaEmbeddedSignupMessage } from "../lib/meta-embedded-signup";
 import { scorePropertyMatch } from "../lib/real-estate-matching";
 import { leadAnalysisSchema } from "../services/ai/schemas";
 import { webhookProviderSchema } from "../services/webhooks/contracts";
 
 describe("critical boundary contracts", () => {
+  it("parses quoted CSV fields and preserves row boundaries", () => {
+    expect(
+      parseCsv(
+        'Nome;E-mail;Observações\r\n"Ana; Silva";ana@example.com;"Linha 1\nLinha 2"',
+      ),
+    ).toEqual({
+      headers: ["Nome", "E-mail", "Observações"],
+      rows: [["Ana; Silva", "ana@example.com", "Linha 1\nLinha 2"]],
+    });
+    expect(
+      createCsv([
+        ["linha", "motivo"],
+        [2, 'Valor com "aspas"'],
+      ]),
+    ).toContain('"Valor com ""aspas"""');
+  });
+
+  it("rejects a CSV without data rows or with an unclosed quote", () => {
+    expect(() => parseCsv("Nome,E-mail")).toThrow("csv_without_rows");
+    expect(() => parseCsv('Nome,E-mail\n"Ana,ana@example.com')).toThrow(
+      "csv_unclosed_quote",
+    );
+  });
   it("converts an explicit agency offset to UTC deterministically", () => {
     expect(
       parseLocalDateTimeWithOffset("2026-08-20T14:30", "-03:00").toISOString(),
@@ -191,5 +220,64 @@ describe("critical boundary contracts", () => {
         hasCompleteRealEstateProfile: false,
       }),
     ).toBeNull();
+  });
+
+  it("accepts Meta Embedded Signup completion only from a trusted Facebook origin", () => {
+    expect(
+      parseMetaEmbeddedSignupMessage({
+        origin: "https://www.facebook.com",
+        data: JSON.stringify({
+          type: "WA_EMBEDDED_SIGNUP",
+          event: "FINISH",
+          data: {
+            waba_id: "123456789012345",
+            phone_number_id: "987654321098765",
+          },
+        }),
+      }),
+    ).toEqual({
+      type: "finished",
+      result: {
+        businessAccountId: "123456789012345",
+        phoneNumberId: "987654321098765",
+      },
+    });
+    expect(
+      parseMetaEmbeddedSignupMessage({
+        origin: "https://facebook.example.test",
+        data: {
+          type: "WA_EMBEDDED_SIGNUP",
+          event: "FINISH",
+          data: {
+            waba_id: "123456789012345",
+            phone_number_id: "987654321098765",
+          },
+        },
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("bounded request bodies", () => {
+  it("reads valid JSON below the byte limit", async () => {
+    const request = new Request("https://revflow.example/api", {
+      method: "POST",
+      body: JSON.stringify({ name: "Lead" }),
+      headers: { "content-type": "application/json" },
+    });
+    await expect(readLimitedJson(request, 100)).resolves.toEqual({
+      name: "Lead",
+    });
+  });
+
+  it("rejects streamed content that exceeds the real limit", async () => {
+    const request = new Request("https://revflow.example/api", {
+      method: "POST",
+      body: JSON.stringify({ content: "x".repeat(100) }),
+      headers: { "content-type": "application/json" },
+    });
+    await expect(readLimitedJson(request, 20)).rejects.toBeInstanceOf(
+      PayloadTooLargeError,
+    );
   });
 });

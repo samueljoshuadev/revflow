@@ -126,12 +126,134 @@ type Lead = {
   score: number;
   summary: string | null;
   next_action: string | null;
+  next_action_at: string | null;
+  first_response_at: string | null;
+  normalized_email: string | null;
+  normalized_phone: string | null;
   custom_fields: Json;
   last_interaction_at: string | null;
   archived_at: string | null;
   lost_reason: string | null;
   qualified_at: string | null;
   ai_status: "not_analyzed" | "pending" | "analyzed" | "reviewed" | "failed";
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type LeadImport = {
+  id: string;
+  organization_id: string;
+  import_key: string;
+  file_name: string;
+  status: "processing" | "completed" | "failed";
+  total_rows: number;
+  created_count: number;
+  duplicate_count: number;
+  invalid_count: number;
+  created_by: string;
+  completed_at: string | null;
+  created_at: string;
+};
+
+type LeadImportItem = {
+  id: string;
+  organization_id: string;
+  import_id: string;
+  row_number: number;
+  status: "created" | "duplicate" | "invalid";
+  reason: string | null;
+  lead_id: string | null;
+  created_at: string;
+};
+
+type LeadCaptureSource = {
+  id: string;
+  organization_id: string;
+  source_key: string;
+  name: string;
+  channel: "form" | "webhook";
+  source_label: string;
+  campaign: string | null;
+  default_service_id: string | null;
+  default_owner_id: string | null;
+  token_hash: string | null;
+  token_hint: string | null;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type FollowUpRule = {
+  id: string;
+  organization_id: string;
+  name: string;
+  trigger_kind:
+    "first_contact" | "return" | "proposal" | "reactivation" | "stale";
+  delay_days: number;
+  notify_in_app: boolean;
+  notify_email: boolean;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type LeadFollowUpState = {
+  id: string;
+  organization_id: string;
+  lead_id: string;
+  rule_id: string;
+  status: "active" | "paused" | "completed" | "cancelled";
+  next_run_at: string;
+  pause_reason: string | null;
+  last_notified_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type Notification = {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  lead_id: string | null;
+  kind: string;
+  title: string;
+  body: string;
+  dedupe_key: string;
+  read_at: string | null;
+  created_at: string;
+};
+
+type NotificationOutbox = {
+  id: string;
+  organization_id: string;
+  notification_id: string;
+  user_id: string;
+  channel: "email";
+  status: "pending" | "processing" | "sent" | "failed" | "blocked";
+  idempotency_key: string;
+  attempts: number;
+  available_at: string;
+  sent_at: string | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type KanbanAutomationRule = {
+  id: string;
+  organization_id: string;
+  event_key:
+    | "lead_created"
+    | "meeting_scheduled"
+    | "meeting_completed"
+    | "proposal_sent"
+    | "proposal_accepted"
+    | "proposal_rejected";
+  target_stage_slug: string;
+  is_active: boolean;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -520,6 +642,14 @@ export type Database = {
       pipeline_stages: Table<PipelineStage>;
       services: Table<Service>;
       leads: Table<Lead>;
+      lead_imports: Table<LeadImport>;
+      lead_import_items: Table<LeadImportItem>;
+      lead_capture_sources: Table<LeadCaptureSource>;
+      follow_up_rules: Table<FollowUpRule>;
+      lead_follow_up_states: Table<LeadFollowUpState>;
+      notifications: Table<Notification>;
+      notification_outbox: Table<NotificationOutbox>;
+      kanban_automation_rules: Table<KanbanAutomationRule>;
       lead_events: Table<LeadEvent>;
       lead_notes: Table<LeadNote>;
       tags: Table<Tag>;
@@ -730,6 +860,69 @@ export type Database = {
           p_output_tokens?: number | null;
         };
         Returns: Json;
+      };
+      import_lead_batch: {
+        Args: {
+          p_organization_id: string;
+          p_import_key: string;
+          p_file_name: string;
+          p_rows: Json;
+        };
+        Returns: Json;
+      };
+      get_public_lead_capture_profile: {
+        Args: { p_organization_slug: string; p_source_key: string };
+        Returns: Json;
+      };
+      capture_external_lead: {
+        Args: {
+          p_organization_slug: string;
+          p_source_key: string;
+          p_channel: "form" | "webhook";
+          p_token: string | null;
+          p_idempotency_key: string;
+          p_identifier: string;
+          p_name: string;
+          p_email: string;
+          p_phone: string;
+          p_company?: string | null;
+          p_summary?: string | null;
+          p_website?: string | null;
+        };
+        Returns: Json;
+      };
+      set_lead_next_action: {
+        Args: {
+          p_organization_id: string;
+          p_lead_id: string;
+          p_action: string;
+          p_due_at: string;
+        };
+        Returns: undefined;
+      };
+      clear_lead_next_action: {
+        Args: {
+          p_organization_id: string;
+          p_lead_id: string;
+          p_outcome: "completed" | "cancelled";
+        };
+        Returns: undefined;
+      };
+      process_due_followups: {
+        Args: { p_limit?: number };
+        Returns: Json;
+      };
+      claim_notification_outbox: {
+        Args: { p_limit?: number };
+        Returns: NotificationOutbox[];
+      };
+      complete_notification_delivery: {
+        Args: {
+          p_outbox_id: string;
+          p_status: "sent" | "failed" | "blocked";
+          p_error?: string | null;
+        };
+        Returns: undefined;
       };
     };
     Enums: {

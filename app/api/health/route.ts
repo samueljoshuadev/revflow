@@ -7,8 +7,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (!isSupabaseConfigured()) {
+    const diagnosticId = crypto.randomUUID();
     return NextResponse.json(
-      { status: "not_ready", database: "not_configured" },
+      { status: "not_ready", database: "not_configured", diagnosticId },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
@@ -21,8 +22,10 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch {
+    const diagnosticId = crypto.randomUUID();
+    console.error("healthcheck_failed", { diagnosticId });
     return NextResponse.json(
-      { status: "degraded", database: "unreachable" },
+      { status: "degraded", database: "unreachable", diagnosticId },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }

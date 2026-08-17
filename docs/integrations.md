@@ -14,7 +14,7 @@ estado `connected` só é persistido depois de uma chamada real ao provedor.
 - [x] Google OAuth com `state`, PKCE, refresh token e teste do Calendar.
 - [x] Criação, atualização e cancelamento de eventos Google sem bloquear a agenda interna quando o provedor falha.
 - [x] OpenAI com teste real, limite mensal, Structured Outputs, validação Zod, qualificação manual/automática e avanço seguro do Kanban na mesma transação.
-- [x] WhatsApp com teste real do número, verificação de webhook, assinatura do corpo bruto, limite de payload, idempotência, histórico e envio na janela de atendimento.
+- [x] WhatsApp com Meta Embedded Signup, alternativa manual, teste real do número, assinatura do corpo bruto, limite de payload, idempotência, histórico e envio na janela de atendimento.
 - [x] Calendly com Personal Access Token criptografado e teste real de conta.
 - [ ] OAuth público e webhooks assinados do Calendly. Exigem um OAuth App do proprietário da plataforma; não há endpoint inseguro ou simulado.
 - [ ] Testes reais com contas Google, OpenAI, Meta e Calendly.
@@ -56,18 +56,51 @@ credencial.
 ## WhatsApp Cloud API
 
 ```env
+META_APP_ID=
+META_APP_SECRET=
+META_WHATSAPP_CONFIGURATION_ID=
 META_GRAPH_API_VERSION=
+META_WEBHOOK_VERIFY_TOKEN=
 SUPABASE_SERVICE_ROLE_KEY=
 INTEGRATION_ENCRYPTION_KEY=
 ```
 
-Depois de salvar a integração, o card mostra uma URL exclusiva:
+### Preparação única do RevFlow na Meta
+
+1. Crie ou use um aplicativo empresarial em Meta for Developers e adicione o
+   produto WhatsApp.
+2. Configure o Facebook Login for Business e crie uma configuração do WhatsApp
+   Embedded Signup. Salve o Configuration ID em
+   `META_WHATSAPP_CONFIGURATION_ID`.
+3. Solicite as permissões necessárias para operação real, incluindo
+   `whatsapp_business_management` e `whatsapp_business_messaging`, e conclua a
+   verificação/revisão exigida pela Meta para atender empresas fora dos papéis
+   de teste do aplicativo.
+4. Cadastre o domínio de produção do RevFlow nos domínios permitidos do
+   aplicativo.
+5. No webhook do objeto `whatsapp_business_account`, use:
 
 ```text
-https://DOMINIO/api/webhooks/whatsapp/CONNECTION_ID
+Callback URL: https://DOMINIO/api/webhooks/whatsapp/meta
+Verify Token: o mesmo valor de META_WEBHOOK_VERIFY_TOKEN
 ```
 
-Essa URL é cadastrada na Meta junto com o Verify Token definido pelo cliente. O POST exige `x-hub-signature-256`, não registra secrets e persiste no inbox apenas metadados sanitizados. Mensagens de contatos ainda não associados a um lead são reconhecidas no evento, mas não viram conversa até haver associação.
+Depois dessa preparação única, owner/admin apenas clica em **Conectar com Meta e
+Facebook**, entra com a conta que administra o Portfólio Empresarial, escolhe a
+WABA e o número. O navegador recebe somente o código temporário e os IDs
+selecionados. O servidor troca o código, comprova que o número pertence à WABA,
+assina a WABA em `subscribed_apps`, criptografa a credencial e testa o número.
+
+O webhook compartilhado valida `x-hub-signature-256` com o App Secret da
+plataforma e encontra o tenant por `phone_number_id`. O payload operacional
+persistido em `webhook_events` é sanitizado. Mensagens de contatos ainda não
+associados a um lead são reconhecidas no evento, mas não viram conversa até
+haver associação.
+
+O modo manual continua disponível para empresas que administram um aplicativo
+Meta próprio. Nesse modo, o card exibe a URL exclusiva
+`/api/webhooks/whatsapp/CONNECTION_ID` e exige token, Phone Number ID, App Secret
+e Verify Token.
 
 ## Calendly
 

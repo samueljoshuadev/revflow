@@ -191,6 +191,8 @@ function Footer({ variant }: { variant: MarketingVariant }) {
         <Link href="/imobiliarias">Imobiliárias</Link>
         <Link href="/como-funciona">Como funciona</Link>
         <Link href="/precos">Preços</Link>
+        <Link href="/privacidade">Privacidade</Link>
+        <Link href="/termos">Termos</Link>
         <Link href="/login">Entrar</Link>
         <a href={salesWhatsAppUrl(context)} target="_blank" rel="noreferrer">
           Contato

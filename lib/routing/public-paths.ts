@@ -5,10 +5,20 @@ const exactPublicPaths = new Set([
   "/imobiliarias",
   "/como-funciona",
   "/precos",
+  "/privacidade",
+  "/termos",
+  "/exclusao-de-dados",
   "/api/health",
 ]);
 
-const publicPathPrefixes = ["/auth/", "/book/", "/api/webhooks/"];
+const publicPathPrefixes = [
+  "/auth/",
+  "/book/",
+  "/capture/",
+  "/api/public/",
+  "/api/webhooks/",
+  "/api/cron/",
+];
 
 export function isPublicPath(pathname: string) {
   return (

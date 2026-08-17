@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileUp, Plus, Search } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
@@ -45,12 +45,20 @@ export default async function LeadsPage({
         title="Leads"
         description={`${result.count.toLocaleString("pt-BR")} contatos no workspace`}
         actions={
-          <Link
-            href="/leads/new"
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-gray-950 px-3.5 text-xs font-medium text-white shadow-sm hover:bg-gray-800"
-          >
-            <Plus className="size-4" /> Novo lead
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/leads/import"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+            >
+              <FileUp className="size-4" /> Importar CSV
+            </Link>
+            <Link
+              href="/leads/new"
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-gray-950 px-3.5 text-xs font-medium text-white shadow-sm hover:bg-gray-800"
+            >
+              <Plus className="size-4" /> Novo lead
+            </Link>
+          </div>
         }
       />
 

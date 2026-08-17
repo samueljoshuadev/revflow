@@ -22,12 +22,22 @@ O stream é append-only. Correções são novos eventos, nunca alteração silen
 
 Implementados: `lead_created`, `lead_updated`, `lead_archived`, `lead_restored`,
 `stage_changed`, `note_added`, `meeting_scheduled`, `meeting_cancelled`,
-`meeting_completed`, `meeting_no_show`, `meeting_rescheduled`, `lead_analyzed` e
-`deal_won`.
+`meeting_completed`, `meeting_no_show`, `meeting_rescheduled`, `lead_analyzed`,
+`lead_imported`, `lead_captured`, `next_action_scheduled`, `proposal_sent`,
+`next_action_completed`, `next_action_cancelled`, `task_completed`,
+`task_cancelled`, `proposal_accepted`, `proposal_rejected` e `deal_won`.
 
 Previstos junto das integrações: `link_clicked`, `form_started`,
 `form_completed`, `whatsapp_contacted`, `message_sent`,
-`message_received`, `proposal_sent`, `negotiation_started` e `deal_lost`.
+`message_received`, `negotiation_started` e `deal_lost`.
+
+## Automação determinística
+
+Reuniões e propostas produzem fatos dentro da mesma transação que altera a
+entidade. `kanban_automation_rules` resolve o destino por slug do pipeline do
+próprio lead. A movimentação grava `stage_changed` com `source = automation` e
+uma chave estável derivada da reunião ou proposta. Repetir o mesmo evento não
+move o lead novamente. Regras ausentes ou pausadas não geram movimento.
 
 Novos nomes devem representar fatos no passado. Evite comandos como `send_message` e eventos genéricos como `updated`.
 

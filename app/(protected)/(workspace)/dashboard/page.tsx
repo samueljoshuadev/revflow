@@ -11,10 +11,12 @@ import {
 import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
+import { FirstClientChecklist } from "@/components/dashboard/first-client-checklist";
 import { RealEstateDashboard } from "@/components/real-estate/real-estate-dashboard";
 import { formatCurrency } from "@/lib/utils";
 import { getDashboardMetrics } from "@/services/dashboard";
 import { getRealEstateDashboardMetrics } from "@/services/real-estate-dashboard";
+import { getFirstClientOnboardingProgress } from "@/services/onboarding-progress";
 import { requireWorkspace } from "@/services/workspace";
 
 export const metadata = { title: "Visão geral" };
@@ -32,7 +34,10 @@ export default async function DashboardPage() {
       />
     );
   }
-  const metrics = await getDashboardMetrics(organization.id);
+  const [metrics, onboarding] = await Promise.all([
+    getDashboardMetrics(organization.id),
+    getFirstClientOnboardingProgress(organization),
+  ]);
   const maxStageCount = Math.max(
     ...metrics.stages.map((stage) => stage.count),
     1,
@@ -88,6 +93,8 @@ export default async function DashboardPage() {
           </Link>
         }
       />
+
+      <FirstClientChecklist {...onboarding} />
 
       <section className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {primaryMetrics.map((metric, index) => {

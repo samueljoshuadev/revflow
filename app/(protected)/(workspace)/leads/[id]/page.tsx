@@ -18,6 +18,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EventTimeline } from "@/components/leads/event-timeline";
+import { NextActionForm } from "@/components/leads/next-action-form";
 import { LeadRealEstatePanel } from "@/components/real-estate/lead-real-estate-panel";
 import { Textarea } from "@/components/ui/field";
 import { cn, formatCurrency, initials } from "@/lib/utils";
@@ -206,6 +207,16 @@ export default async function LeadPage({
                 <p className="mt-1 text-xs font-medium text-gray-900">
                   {lead.next_action || "Defina a próxima ação comercial"}
                 </p>
+                {lead.next_action_at && (
+                  <p className="mt-1 text-[10px] text-gray-500">
+                    Prazo: {formatDate(lead.next_action_at)}
+                  </p>
+                )}
+                <NextActionForm
+                  leadId={lead.id}
+                  action={lead.next_action ?? ""}
+                  hasScheduledAction={Boolean(lead.next_action_at)}
+                />
                 <Link
                   href={`/calendar?leadId=${lead.id}`}
                   className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg bg-gray-950 px-3 text-xs font-medium text-white hover:bg-gray-800"
