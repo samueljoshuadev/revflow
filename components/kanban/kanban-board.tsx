@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CircleAlert, CircleCheck, Search } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 
 import {
   moveLeadStage,
@@ -39,6 +39,13 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
     text: string;
   } | null>(null);
   const [automatingLeadId, setAutomatingLeadId] = useState<string | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const boardScrollerRef = useRef<HTMLDivElement>(null);
+  const panRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startScrollLeft: number;
+  } | null>(null);
   const [isPending, startTransition] = useTransition();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -146,6 +153,51 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
     });
   }
 
+  function handleBoardPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) return;
+
+    const target = event.target as HTMLElement;
+    if (
+      target.closest(
+        '[data-kanban-card], a, button, input, select, textarea, [role="button"]',
+      )
+    ) {
+      return;
+    }
+
+    const scroller = boardScrollerRef.current;
+    if (!scroller) return;
+
+    panRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: scroller.scrollLeft,
+    };
+    scroller.setPointerCapture(event.pointerId);
+    setIsPanning(true);
+  }
+
+  function handleBoardPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const pan = panRef.current;
+    const scroller = boardScrollerRef.current;
+    if (!pan || !scroller || pan.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    scroller.scrollLeft = pan.startScrollLeft - (event.clientX - pan.startX);
+  }
+
+  function stopBoardPan(event: React.PointerEvent<HTMLDivElement>) {
+    const pan = panRef.current;
+    const scroller = boardScrollerRef.current;
+    if (!pan || pan.pointerId !== event.pointerId) return;
+
+    if (scroller?.hasPointerCapture(event.pointerId)) {
+      scroller.releasePointerCapture(event.pointerId);
+    }
+    panRef.current = null;
+    setIsPanning(false);
+  }
+
   return (
     <div>
       <div className="flex flex-col gap-3 border-y border-gray-200/80 bg-white px-4 py-3 sm:flex-row sm:items-center sm:px-6 lg:px-8">
@@ -203,7 +255,19 @@ export function KanbanBoard({ initialBoard }: { initialBoard: PipelineBoard }) {
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveLeadId(null)}
       >
-        <div className="flex min-h-[calc(100vh-218px)] gap-3 overflow-x-auto px-4 py-5 sm:px-6 lg:px-8">
+        <div
+          ref={boardScrollerRef}
+          onPointerDown={handleBoardPointerDown}
+          onPointerMove={handleBoardPointerMove}
+          onPointerUp={stopBoardPan}
+          onPointerCancel={stopBoardPan}
+          className={cn(
+            "flex min-h-[calc(100vh-218px)] gap-3 overflow-x-auto px-4 py-5 select-none sm:px-6 lg:px-8",
+            isPanning ? "cursor-grabbing" : "cursor-grab",
+          )}
+          style={{ touchAction: "pan-y" }}
+          aria-label="Quadro Kanban. Arraste o fundo para navegar horizontalmente."
+        >
           {visibleStages.map((stage) => (
             <KanbanColumn
               key={stage.id}

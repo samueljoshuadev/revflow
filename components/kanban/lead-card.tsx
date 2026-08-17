@@ -55,6 +55,7 @@ export function LeadCard({
   return (
     <article
       ref={setNodeRef}
+      data-kanban-card="true"
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
