@@ -37,6 +37,13 @@ npm run build
 
 # output: "standalone" emits a server bundle that does not include public/ or
 # the client chunks, so assemble a self-contained tree before switching over.
+# next.config.ts disables standalone when VERCEL is set; fail loudly instead of
+# releasing a tree with no server in it.
+test -f .next/standalone/server.js || {
+  echo "build produced no standalone server (is VERCEL set in the environment?)" >&2
+  exit 1
+}
+
 cp -r public .next/standalone/public
 mkdir -p .next/standalone/.next
 cp -r .next/static .next/standalone/.next/static
