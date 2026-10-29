@@ -42,6 +42,37 @@ export type PropertyDetail = Tables<"properties"> & {
   events: Tables<"real_estate_events">[];
 };
 
+export type DevelopmentUnit = Tables<"properties"> & {
+  sale_terms: Tables<"property_sale_terms"> | null;
+};
+
+export type DevelopmentDetail = Tables<"developments"> & {
+  units: DevelopmentUnit[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type DevelopmentSummary = {
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  neighborhood: string | null;
+  total_units: number | null;
+  payment_plan_label: string | null;
+  sales_table_reference: string | null;
+  sales_table_updated_at: string | null;
+  units_imported: number;
+  units_available: number;
+  units_reserved: number;
+  units_sold: number;
+  min_available_price: number | null;
+  max_available_price: number | null;
+  available_inventory_value: number;
+};
+
 export type DeterministicPropertyMatch = {
   property: Tables<"properties">;
   score: number;

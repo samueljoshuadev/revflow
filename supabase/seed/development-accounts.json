@@ -1,0 +1,33 @@
+{
+  "owner_email": "contato@misteriodigital.com.br",
+  "members": ["mourajdemoura@gmail.com"],
+  "accounts": [
+    {
+      "organization_name": "LOOVIMOB — Reserva do Lago",
+      "organization_slug": "loovimob-reserva-do-lago",
+      "member_role": "manager",
+      "sales_table": "sales-tables/reserva-do-lago.json"
+    },
+    {
+      "organization_name": "LOOVIMOB — Key West Jardim",
+      "organization_slug": "loovimob-key-west-jardim",
+      "member_role": "manager",
+      "sales_table": "sales-tables/key-west-jardim.json"
+    },
+    {
+      "organization_name": "LOOVIMOB — Campos de Oliveira",
+      "organization_slug": "loovimob-campos-de-oliveira",
+      "member_role": "manager",
+      "development": {
+        "slug": "campos-de-oliveira",
+        "name": "Campos de Oliveira",
+        "property_type": "house",
+        "city": null,
+        "state": null,
+        "neighborhood": null,
+        "total_units": null,
+        "notes": "Espelho de vendas ainda não recebido. Preencher cidade e dados oficiais antes de importar."
+      }
+    }
+  ]
+}

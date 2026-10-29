@@ -340,10 +340,57 @@ type Property = {
   description: string | null;
   features: string[];
   responsible_user_id: string | null;
+  development_id: string | null;
+  land_area_m2: number | null;
+  unit_floor: number | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
   archived_at: string | null;
+};
+
+type Development = {
+  id: string;
+  organization_id: string;
+  slug: string;
+  name: string;
+  developer_name: string | null;
+  property_type: PropertyType;
+  city: string;
+  state: string | null;
+  neighborhood: string | null;
+  total_units: number | null;
+  bedrooms: number | null;
+  private_area_m2: number | null;
+  parking_spaces: number | null;
+  payment_plan_label: string | null;
+  sales_table_reference: string | null;
+  sales_table_updated_at: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+
+type PropertySaleTerms = {
+  property_id: string;
+  organization_id: string;
+  list_price: number;
+  price_per_m2: number | null;
+  down_payment: number | null;
+  down_payment_percent: number | null;
+  monthly_installment: number | null;
+  monthly_installment_count: number | null;
+  annual_installment: number | null;
+  annual_installment_count: number | null;
+  keys_payment: number | null;
+  financing_amount: number | null;
+  financing_percent: number | null;
+  source_reference: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 type PropertyPhoto = {
@@ -656,6 +703,8 @@ export type Database = {
       lead_tags: Table<LeadTag>;
       meetings: Table<Meeting>;
       properties: Table<Property>;
+      developments: Table<Development>;
+      property_sale_terms: Table<PropertySaleTerms>;
       property_photos: Table<PropertyPhoto>;
       real_estate_lead_profiles: Table<RealEstateLeadProfile>;
       property_matches: Table<PropertyMatch>;
@@ -771,6 +820,19 @@ export type Database = {
         Returns: Json;
       };
       get_operational_metrics: {
+        Args: { p_organization_id: string };
+        Returns: Json;
+      };
+      import_sales_table: {
+        Args: {
+          p_organization_id: string;
+          p_development_id: string;
+          p_units: Json;
+          p_source_reference?: string | null;
+        };
+        Returns: Json;
+      };
+      get_development_summary: {
         Args: { p_organization_id: string };
         Returns: Json;
       };

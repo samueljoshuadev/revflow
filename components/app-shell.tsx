@@ -49,6 +49,7 @@ const agencyNavigation: Array<{
 const realEstateNavigation: typeof agencyNavigation = [
   { label: "Visão geral", href: "/dashboard", icon: LayoutDashboard },
   { label: "Leads", href: "/leads", icon: ContactRound },
+  { label: "Empreendimentos", href: "/developments", icon: Building2 },
   { label: "Imóveis", href: "/properties", icon: Building2 },
   { label: "Visitas", href: "/visits", icon: CalendarDays },
   { label: "Agenda", href: "/calendar", icon: CalendarDays },

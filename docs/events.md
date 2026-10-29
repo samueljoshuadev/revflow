@@ -83,3 +83,26 @@ Metadados de evento devem ter schema versionado no produtor quando passarem a di
 ## Operação e autorização
 
 As mudanças de papel de membros são eventos de auditoria operacional, não fatos de lead. O envio de WhatsApp começa como uma mensagem `queued`; a atualização para `sent` ou `failed` é feita pelo adaptador server-side após a resposta da Meta. Não registre conteúdo de mensagens, tokens ou dados de integração em logs de aplicação.
+
+## Empreendimentos e espelho de vendas
+
+`real_estate_events` passou a aceitar `entity_type = 'development'`. Os fatos são:
+
+- `development_created`, `development_updated`, `development_deleted`, com `slug` e `name`.
+- `sales_table_imported`, gravado por `import_sales_table` ao final da transação:
+
+```json
+{
+  "created": 45,
+  "updated": 0,
+  "without_price": 0,
+  "source_reference": "tabela-vendas-reserva-do-lago.pdf"
+}
+```
+
+`without_price` conta as unidades que vieram sem valor na tabela oficial. Elas
+ficam registradas no espelho com status `inactive` e sem linha em
+`property_sale_terms`: nenhum preço é inventado para completar a tabela.
+
+A reimportação da mesma tabela é idempotente por `(organization_id, code)` e
+atualiza preço, status e condições sem duplicar unidade.
