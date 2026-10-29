@@ -11,7 +11,7 @@
 ## Incidente
 
 1. Confirme `/api/health` e o status do Supabase.
-2. Na Vercel, filtre logs por erros 5xx e pelo horário do incidente.
+2. No VPS, rode `pm2 logs loovimob --lines 200` e filtre o horário do incidente; para erros de borda veja `/var/log/nginx/error.log`.
 3. Não copie payloads, tokens ou PII para tickets.
 4. Registre o diagnostic ID e a rota afetada.
 5. Em caso de vazamento de segredo, revogue e rotacione antes de realizar novo deploy.
@@ -20,7 +20,7 @@
 
 - Configure um monitor HTTP externo em `https://SEU-DOMINIO/api/health`.
 - Considere saudável somente HTTP 200 com `status = ok`.
-- Em HTTP 503, guarde o `diagnosticId` e procure o mesmo identificador nos logs da Vercel.
+- Em HTTP 503, guarde o `diagnosticId` e procure o mesmo identificador em `pm2 logs loovimob`.
 - O healthcheck não retorna versão, credencial, nome de organização ou dados de clientes.
 
 ## E-mail
@@ -31,6 +31,6 @@
 
 ## Cron
 
-- A Vercel chama `/api/cron/follow-ups` diariamente às 12:00 UTC.
+- O cron do sistema (`deploy/follow-ups.cron`) chama `/api/cron/follow-ups` diariamente às 12:00 UTC.
 - `CRON_SECRET` deve ser aleatório, estável e somente server-side.
 - O endpoint usa claim com `skip locked`, idempotência e retry limitado.

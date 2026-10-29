@@ -9,7 +9,7 @@ RLS.
 - Next.js App Router, React, TypeScript estrito e Tailwind CSS
 - Supabase Auth, PostgreSQL, RLS e funções transacionais
 - dnd-kit para Kanban, Zod nas fronteiras e Vitest nos contratos
-- Vercel como destino de deploy
+- VPS Hostinger como destino de deploy
 
 ## Configuração local
 
@@ -59,9 +59,10 @@ O teste SQL `supabase/tests/phase_2_rls.sql` exige Supabase CLI/projeto de teste
 ## Deploy
 
 Crie projetos Supabase separados para homologação e produção, aplique migrations
-antes da aplicação e configure as variáveis por ambiente na Vercel. Atualize a
-allowlist de redirect do Auth. Este diretório ainda precisa ser iniciado como
-repositório Git e conectado a ambos os serviços.
+antes da aplicação e configure as variáveis de cada ambiente em
+`/var/www/loovimob/shared/.env.production` no VPS. Atualize a allowlist de
+redirect do Auth. O passo a passo completo (provisionamento, Nginx, TLS, PM2,
+cron e virada de DNS) está em [docs/deploy-hostinger.md](docs/deploy-hostinger.md).
 
 ## Documentação
 

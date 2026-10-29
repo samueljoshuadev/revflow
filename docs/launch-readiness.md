@@ -14,7 +14,7 @@
 
 1. Aplicar todas as migrations, inclusive
    `202608150003_ai_kanban_automation.sql`, em homologação e produção.
-2. Configurar as variáveis da Vercel sem expor service role, chave de criptografia
+2. Configurar `/var/www/loovimob/shared/.env.production` sem expor service role, chave de criptografia
    ou chaves de provedores no navegador.
 3. Executar `npm run test:openai` em homologação com uma chave válida e um limite
    de uso definido.

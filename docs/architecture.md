@@ -6,7 +6,7 @@ O RevFlow permanece um único SaaS multi-tenant. `organizations.vertical` seleci
 
 ## Visão geral
 
-O Orbit CRM usa Next.js App Router na Vercel e Supabase como fonte primária de dados, autenticação e autorização. Componentes de servidor leem dados diretamente com a sessão do usuário; componentes de cliente ficam restritos às interações que exigem estado local, como o Kanban. Toda mutação é validada no servidor e novamente protegida por constraints/RLS no PostgreSQL.
+O Orbit CRM usa Next.js App Router em VPS Hostinger (build `standalone` atrás de Nginx, gerenciado por PM2) e Supabase como fonte primária de dados, autenticação e autorização. Componentes de servidor leem dados diretamente com a sessão do usuário; componentes de cliente ficam restritos às interações que exigem estado local, como o Kanban. Toda mutação é validada no servidor e novamente protegida por constraints/RLS no PostgreSQL.
 
 ```mermaid
 flowchart LR

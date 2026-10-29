@@ -18,7 +18,7 @@ estado `connected` só é persistido depois de uma chamada real ao provedor.
 - [x] Calendly com Personal Access Token criptografado e teste real de conta.
 - [ ] OAuth público e webhooks assinados do Calendly. Exigem um OAuth App do proprietário da plataforma; não há endpoint inseguro ou simulado.
 - [ ] Testes reais com contas Google, OpenAI, Meta e Calendly.
-- [ ] Homologação e deploy na Vercel.
+- [ ] Homologação e deploy no VPS Hostinger.
 
 ## Preparação única da plataforma
 

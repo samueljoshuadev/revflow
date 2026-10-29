@@ -61,7 +61,7 @@ Atualizado em: 2026-08-15
 - [!] Revisão jurídica dos textos antes do lançamento amplo.
 - [-] Runbook de backup e restauração documentado.
 - [!] Configurar SMTP próprio no Supabase Auth.
-- [!] Ativar alertas e revisar logs na Vercel.
+- [!] Ativar alertas e revisar logs do PM2 e do Nginx no VPS.
 - [-] Healthcheck retorna ID de diagnóstico sem expor dados internos.
 - [-] Teste SQL com 20 asserções cobre intake, RLS, notificações, tarefas e Kanban.
 - [ ] Testar restauração em homologação.

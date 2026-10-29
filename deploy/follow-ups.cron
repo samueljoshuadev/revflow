@@ -1,0 +1,6 @@
+# Replaces the Vercel cron entry in vercel.json, which no platform runs now.
+# Install with: crontab -u root /var/www/loovimob/current/deploy/follow-ups.cron
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+0 12 * * * /var/www/loovimob/current/deploy/run-follow-ups.sh

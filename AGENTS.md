@@ -8,7 +8,7 @@ Este repositório é a fundação de um CRM multi-tenant, orientado a eventos, p
 
 - Next.js App Router, React, TypeScript estrito e Tailwind CSS.
 - Supabase Auth/PostgreSQL/RLS.
-- Vercel. Não trocar a plataforma ou o framework sem decisão arquitetural explícita.
+- VPS Hostinger: Next.js em modo `standalone` atrás de Nginx, gerenciado por PM2 (`deploy/`). Não trocar a plataforma ou o framework sem decisão arquitetural explícita.
 - npm e `package-lock.json` são o gerenciador/lockfile canônicos.
 
 ## Regras arquiteturais
