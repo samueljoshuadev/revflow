@@ -490,6 +490,8 @@ type PropertyProposal = {
   counter_offer_price: number | null;
   cancelled_at: string | null;
   cancel_reason: string | null;
+  commercial_rules_snapshot: Json | null;
+  analysis_reference_date: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -527,6 +529,50 @@ type ProposalDocument = {
   mime_type: string;
   size_bytes: number;
   uploaded_by: string | null;
+  created_at: string;
+};
+
+export type PaymentItemKind =
+  | "signal"
+  | "down_payment"
+  | "monthly"
+  | "intermediate"
+  | "keys"
+  | "fgts"
+  | "financing";
+
+type DevelopmentCommercialRules = {
+  development_id: string;
+  id: string;
+  organization_id: string;
+  max_discount_percent: number | null;
+  min_down_payment_percent: number | null;
+  max_down_payment_installments: number | null;
+  min_paid_until_keys_percent: number | null;
+  present_value_monthly_rate: number | null;
+  commission_percent: number | null;
+  broker_share: number;
+  manager_share: number;
+  director_share: number;
+  partner_share: number;
+  commission_payment_rule: "upfront" | "with_down_payment";
+  commission_max_installments: number | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type ProposalPaymentItem = {
+  id: string;
+  organization_id: string;
+  proposal_id: string;
+  kind: PaymentItemKind;
+  installment_count: number;
+  installment_amount: number;
+  total_amount: number;
+  first_due_date: string;
+  interval_months: number;
+  position: number;
   created_at: string;
 };
 
@@ -861,6 +907,8 @@ export type Database = {
       property_proposals: Table<PropertyProposal>;
       proposal_parties: Table<ProposalParty>;
       proposal_documents: Table<ProposalDocument>;
+      development_commercial_rules: Table<DevelopmentCommercialRules>;
+      proposal_payment_items: Table<ProposalPaymentItem>;
       clients: Table<Client>;
       proposals: Table<Proposal>;
       proposal_items: Table<ProposalItem>;
@@ -923,6 +971,14 @@ export type Database = {
           p_financing_amount: number;
           p_payment_notes: string | null;
           p_notes: string | null;
+        };
+        Returns: undefined;
+      };
+      replace_proposal_payment_plan: {
+        Args: {
+          p_organization_id: string;
+          p_proposal_id: string;
+          p_items: Json;
         };
         Returns: undefined;
       };

@@ -178,7 +178,7 @@ export async function getDevelopmentSettings(
   developmentId: string,
 ) {
   const supabase = await createClient();
-  const [developmentResult, towersResult] = await Promise.all([
+  const [developmentResult, towersResult, rulesResult] = await Promise.all([
     supabase
       .from("developments")
       .select("*")
@@ -194,9 +194,16 @@ export async function getDevelopmentSettings(
       .order("position")
       .order("name")
       .limit(200),
+    supabase
+      .from("development_commercial_rules")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .eq("development_id", developmentId)
+      .maybeSingle(),
   ]);
   if (developmentResult.error) throw developmentResult.error;
   if (towersResult.error) throw towersResult.error;
+  if (rulesResult.error) throw rulesResult.error;
   if (!developmentResult.data) return null;
-  return { development: developmentResult.data, towers: towersResult.data };
+  return { development: developmentResult.data, towers: towersResult.data, rules: rulesResult.data };
 }

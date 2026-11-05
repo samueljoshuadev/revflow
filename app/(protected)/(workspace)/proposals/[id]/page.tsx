@@ -7,6 +7,7 @@ import {
   Gavel,
   HandCoins,
   ListChecks,
+  ReceiptText,
   Send,
   UserPlus,
   Users,
@@ -18,9 +19,18 @@ import { z } from "zod";
 
 import { Field } from "@/components/developments/development-form";
 import { Notice } from "@/components/developments/notice";
+import { AnalysisCard, CommissionCard } from "@/components/proposals/analysis-cards";
 import { PartyCard, PartyFields } from "@/components/proposals/party-card";
+import { PaymentPlanEditor } from "@/components/proposals/payment-plan-editor";
 import { Label, Textarea } from "@/components/ui/field";
 import { isOrganizationAdmin } from "@/lib/developments";
+import {
+  analyzeProposal,
+  calculateCommission,
+  paymentKindLabels,
+  toCommercialRules,
+  type PaymentItem,
+} from "@/lib/proposal-analysis";
 import {
   describeDeadline,
   describeMissingRequirements,
@@ -40,6 +50,7 @@ import {
   removeProposalParty,
   saveProposalParty,
   submitProposal,
+  savePaymentPlan,
   updateProposalTerms,
   uploadProposalDocument,
 } from "../actions";
@@ -94,6 +105,33 @@ export default async function ProposalPage({
   const discount = proposal.list_price_snapshot > 0 ? ((proposal.offered_price - proposal.list_price_snapshot) / proposal.list_price_snapshot) * 100 : 0;
   const buyer = proposal.parties.find((party) => party.role === "buyer");
   const hasSpouse = proposal.parties.some((party) => party.role === "spouse");
+  const usingSnapshot = proposal.status !== "draft" && proposal.commercial_rules_snapshot !== null;
+  const rules = toCommercialRules(usingSnapshot ? proposal.commercial_rules_snapshot : proposal.current_rules);
+  const planItems: PaymentItem[] = proposal.payment_items.map((item) => ({
+    kind: item.kind,
+    installment_count: item.installment_count,
+    installment_amount: Number(item.installment_amount),
+    first_due_date: item.first_due_date,
+    interval_months: item.interval_months,
+  }));
+  const hasPlan = planItems.length > 0;
+  const analysis = analyzeProposal({
+    listPrice: proposal.list_price_snapshot,
+    offeredPrice: proposal.offered_price,
+    items: planItems,
+    rules,
+    deliveryDate: proposal.development.delivery_date,
+    referenceDate: proposal.analysis_reference_date ?? new Date().toISOString().slice(0, 10),
+    developmentTotalVgv: proposal.development_total_vgv,
+  });
+  const commission = calculateCommission({
+    rules,
+    offeredPrice: proposal.offered_price,
+    items: planItems,
+    hasManager: Boolean(proposal.manager_user_id),
+    hasDirector: Boolean(proposal.director_user_id),
+    hasPartner: Boolean(proposal.partner_agency_id),
+  });
   const partyActions = {
     saveAction: saveProposalParty,
     removeAction: removeProposalParty,
@@ -177,6 +215,38 @@ export default async function ProposalPage({
             </section>
           )}
 
+          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900"><ReceiptText className="size-4 text-brand-dark" /> Fluxo de pagamento</h2>
+            <p className="mt-1 text-[11px] text-gray-500">Como o cliente vai pagar. É a base da análise e do cálculo da comissão.</p>
+            {editable ? (
+              <PaymentPlanEditor
+                key={proposal.payment_items.map((item) => item.id).join(",") || "empty"}
+                proposalId={proposal.id}
+                offeredPrice={proposal.offered_price}
+                initialItems={planItems}
+                minDownPaymentPercent={rules?.min_down_payment_percent ?? null}
+                deliveryDate={proposal.development.delivery_date}
+                action={savePaymentPlan}
+              />
+            ) : hasPlan ? (
+              <ul className="mt-3 divide-y divide-gray-100 text-xs">
+                {proposal.payment_items.map((item) => (
+                  <li key={item.id} className="flex flex-wrap justify-between gap-2 py-2">
+                    <span className="font-medium text-gray-900">{paymentKindLabels[item.kind]}</span>
+                    <span className="text-gray-600">
+                      {item.installment_count}x {formatCurrency(Number(item.installment_amount))} · a partir de{" "}
+                      {new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(`${item.first_due_date}T00:00:00Z`))}
+                      {item.installment_count > 1 && item.interval_months > 1 ? ` · a cada ${item.interval_months} meses` : ""}
+                    </span>
+                    <span className="font-semibold text-gray-900">{formatCurrency(Number(item.total_amount))}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-xs text-gray-400">Fluxo não informado.</p>
+            )}
+          </section>
+
           {proposal.parties.map((party) => (
             <PartyCard
               key={party.id}
@@ -233,15 +303,34 @@ export default async function ProposalPage({
             </section>
           )}
 
+          <AnalysisCard analysis={analysis} usingSnapshot={usingSnapshot} />
+          <CommissionCard
+            commission={commission}
+            names={{
+              broker: proposal.broker_name,
+              manager: proposal.manager_name,
+              director: proposal.director_name,
+              partner: proposal.partner_agency?.name ?? null,
+            }}
+          />
+
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900"><HandCoins className="size-4 text-brand-dark" /> Valores e pagamento</h2>
             {editable ? (
               <form action={updateProposalTerms} className="mt-4 grid grid-cols-2 gap-3">
                 <input type="hidden" name="proposalId" value={proposal.id} />
                 <div className="col-span-2"><Field label="Valor ofertado (R$)" name="offeredPrice" id="terms-offered" type="number" step="0.01" min={1} defaultValue={proposal.offered_price} required /></div>
-                <Field label="Entrada (R$)" name="downPayment" id="terms-down" type="number" step="0.01" min={0} defaultValue={proposal.down_payment} />
-                <Field label="FGTS (R$)" name="fgtsAmount" id="terms-fgts" type="number" step="0.01" min={0} defaultValue={proposal.fgts_amount} />
-                <div className="col-span-2"><Field label="Financiamento (R$)" name="financingAmount" id="terms-financing" type="number" step="0.01" min={0} defaultValue={proposal.financing_amount} /></div>
+                {hasPlan ? (
+                  <p className="col-span-2 rounded-lg bg-gray-50 px-3 py-2 text-[11px] text-gray-600">
+                    Entrada {formatCurrency(proposal.down_payment)} · FGTS {formatCurrency(proposal.fgts_amount)} · Financiamento {formatCurrency(proposal.financing_amount)}. Calculados pelo fluxo de pagamento.
+                  </p>
+                ) : (
+                  <>
+                    <Field label="Entrada (R$)" name="downPayment" id="terms-down" type="number" step="0.01" min={0} defaultValue={proposal.down_payment} />
+                    <Field label="FGTS (R$)" name="fgtsAmount" id="terms-fgts" type="number" step="0.01" min={0} defaultValue={proposal.fgts_amount} />
+                    <div className="col-span-2"><Field label="Financiamento (R$)" name="financingAmount" id="terms-financing" type="number" step="0.01" min={0} defaultValue={proposal.financing_amount} /></div>
+                  </>
+                )}
                 <div className="col-span-2">
                   <Label htmlFor="terms-payment">Condições de pagamento</Label>
                   <Textarea id="terms-payment" name="paymentNotes" rows={2} maxLength={2000} defaultValue={proposal.payment_notes ?? ""} />

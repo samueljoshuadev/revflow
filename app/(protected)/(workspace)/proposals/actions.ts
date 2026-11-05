@@ -484,3 +484,47 @@ export async function cancelProposal(formData: FormData) {
   revalidateProposal(proposal.id, proposal.developmentId);
   redirect(proposalUrl(proposal.id, { message: "Proposta cancelada." }));
 }
+
+// ---------------------------------------------------------------------------
+// Fluxo de pagamento
+// ---------------------------------------------------------------------------
+
+const paymentItemSchema = z.object({
+  kind: z.enum(["signal", "down_payment", "monthly", "intermediate", "keys", "fgts", "financing"]),
+  installment_count: z.coerce.number().int().min(1).max(480),
+  installment_amount: z.coerce.number().gt(0).max(999_999_999_999),
+  first_due_date: z.iso.date(),
+  interval_months: z.coerce.number().int().min(1).max(12),
+});
+
+export async function savePaymentPlan(formData: FormData) {
+  const { organization } = await requireRealEstateWorkspace();
+  const proposalId = z.uuid().safeParse(formData.get("proposalId"));
+  if (!proposalId.success) redirect("/proposals");
+  const proposal = await getProposalRef(organization.id, proposalId.data);
+  let rawItems: unknown;
+  try {
+    rawItems = JSON.parse(String(formData.get("items") ?? "[]"));
+  } catch {
+    rawItems = null;
+  }
+  const items = z.array(paymentItemSchema).min(1).max(20).safeParse(rawItems);
+  if (!items.success) {
+    redirect(proposalUrl(proposal.id, { error: "Revise o fluxo: cada linha precisa de quantidade, valor e data." }));
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("replace_proposal_payment_plan", {
+    p_organization_id: organization.id,
+    p_proposal_id: proposal.id,
+    p_items: items.data,
+  });
+  if (error) {
+    console.error("payment_plan_save_failed", { code: error.code });
+    const message = error.message.includes("plan_exceeds_price")
+      ? "O fluxo passa do valor ofertado."
+      : databaseMessage(error);
+    redirect(proposalUrl(proposal.id, { error: message }));
+  }
+  revalidateProposal(proposal.id);
+  redirect(proposalUrl(proposal.id, { message: "Fluxo de pagamento salvo." }));
+}

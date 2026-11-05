@@ -443,3 +443,74 @@ export async function updateUnit(formData: FormData) {
   revalidateDevelopment(developmentId);
   redirect(`${unitUrl}&message=Unidade+atualizada.`);
 }
+
+const percent = nullableNumber(z.number().min(0).max(100));
+const share = z.preprocess(
+  (value) => (value === "" || value === null ? 0 : value),
+  z.coerce.number().min(0).max(100),
+);
+
+const rulesSchema = z
+  .object({
+    developmentId: z.uuid(),
+    maxDiscountPercent: percent,
+    minDownPaymentPercent: percent,
+    maxDownPaymentInstallments: nullableNumber(z.number().int().min(1).max(120)),
+    minPaidUntilKeysPercent: percent,
+    presentValueMonthlyRate: nullableNumber(z.number().min(0).max(10)),
+    commissionPercent: nullableNumber(z.number().min(0).max(30)),
+    brokerShare: share,
+    managerShare: share,
+    directorShare: share,
+    partnerShare: share,
+    commissionPaymentRule: z.enum(["upfront", "with_down_payment"]),
+    commissionMaxInstallments: nullableNumber(z.number().int().min(1).max(120)),
+  })
+  .refine(
+    (data) => data.brokerShare + data.managerShare + data.directorShare + data.partnerShare <= 100,
+    { path: ["brokerShare"] },
+  );
+
+/** Regras do jogo da incorporadora: limites da proposta e divisão da comissão. */
+export async function saveCommercialRules(formData: FormData) {
+  const { user, organization } = await requireRealEstateAdmin();
+  const parsed = rulesSchema.safeParse(Object.fromEntries(formData));
+  const rawId = z.uuid().safeParse(formData.get("developmentId"));
+  if (!parsed.success) {
+    redirect(
+      rawId.success
+        ? `/developments/${rawId.data}/settings?error=Revise+as+regras.+A+divisão+da+comissão+não+pode+passar+de+100%25.`
+        : "/developments?error=Dados+inválidos.",
+    );
+  }
+  const data = parsed.data;
+  const developmentId = await assertDevelopment(organization.id, data.developmentId);
+  const supabase = await createClient();
+  const { error } = await supabase.from("development_commercial_rules").upsert(
+    {
+      development_id: developmentId,
+      organization_id: organization.id,
+      max_discount_percent: data.maxDiscountPercent,
+      min_down_payment_percent: data.minDownPaymentPercent,
+      max_down_payment_installments: data.maxDownPaymentInstallments,
+      min_paid_until_keys_percent: data.minPaidUntilKeysPercent,
+      present_value_monthly_rate: data.presentValueMonthlyRate,
+      commission_percent: data.commissionPercent,
+      broker_share: data.brokerShare,
+      manager_share: data.managerShare,
+      director_share: data.directorShare,
+      partner_share: data.partnerShare,
+      commission_payment_rule: data.commissionPaymentRule,
+      commission_max_installments: data.commissionMaxInstallments,
+      updated_by: user.id,
+    },
+    { onConflict: "development_id" },
+  );
+  if (error) {
+    console.error("commercial_rules_save_failed", { code: error.code });
+    redirect(`/developments/${developmentId}/settings?error=Não+foi+possível+salvar+as+regras.`);
+  }
+  revalidateDevelopment(developmentId);
+  revalidatePath("/proposals");
+  redirect(`/developments/${developmentId}/settings?message=Regras+comerciais+salvas.`);
+}

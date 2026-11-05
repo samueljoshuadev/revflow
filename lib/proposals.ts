@@ -127,6 +127,12 @@ export function describeMissingRequirements(
     if (code === "buyer_missing") {
       return { code, partyId: null, label: "Cadastre o comprador principal." };
     }
+    if (code === "payment_plan_missing") {
+      return { code, partyId: null, label: "Monte o fluxo de pagamento da proposta." };
+    }
+    if (code === "payment_plan_total_mismatch") {
+      return { code, partyId: null, label: "O fluxo de pagamento precisa somar exatamente o valor ofertado." };
+    }
     if (code === "spouse_missing") {
       return {
         code,

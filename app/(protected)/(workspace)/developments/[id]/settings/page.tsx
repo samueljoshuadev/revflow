@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
+import { CommercialRulesForm } from "@/components/developments/commercial-rules-form";
 import { DevelopmentForm, Field } from "@/components/developments/development-form";
 import { Notice } from "@/components/developments/notice";
 import { PageHeader } from "@/components/page-header";
@@ -16,6 +17,7 @@ import {
   createTower,
   createUnit,
   generateUnits,
+  saveCommercialRules,
   updateDevelopment,
 } from "../../actions";
 
@@ -33,7 +35,7 @@ export default async function DevelopmentSettingsPage({ params, searchParams }: 
   const { organization } = await requireRealEstateAdmin();
   const settings = await getDevelopmentSettings(organization.id, id);
   if (!settings) notFound();
-  const { development, towers } = settings;
+  const { development, towers, rules } = settings;
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
@@ -95,6 +97,12 @@ export default async function DevelopmentSettingsPage({ params, searchParams }: 
             <button className="h-9 rounded-lg border border-red-200 px-4 text-xs font-semibold text-red-700 hover:bg-red-50">Arquivar</button>
           </form>
         </Card>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="mb-1 text-sm font-semibold text-gray-900">Regras comerciais da incorporadora</h2>
+        <p className="mb-4 text-xs text-gray-500">Cada proposta guarda uma cópia destas regras no momento do envio. Mudanças valem para novos envios.</p>
+        <CommercialRulesForm developmentId={development.id} rules={rules} action={saveCommercialRules} />
       </div>
 
       <div className="mt-8">

@@ -101,7 +101,17 @@ Fluxo: unidade no espelho → **Criar proposta** (rascunho com comprador e valor
 - **Notificações**: in-app (e e-mail pelo outbox existente) para admins (nova proposta) e corretor/gerente/diretor (fila, aprovação, recusa, contraproposta, expiração). `notifications.action_path` leva direto à proposta.
 - **Imobiliárias parceiras**: `partner_agencies` (Corretores → Imobiliárias parceiras) e campos de corretor externo na proposta.
 
-Próximas fases: analisador/comissão por regras da incorporadora, contrato gerado na aprovação, aviso por WhatsApp personalizável e autorização LGPD com entrevista.
+## Analisador de proposta e comissão
+
+Migration: `supabase/migrations/202611050003_proposal_analysis.sql`.
+
+- **Regras comerciais** por empreendimento (`development_commercial_rules`, editadas em Empreendimento → Configurar): desconto máximo, entrada mínima, máximo de parcelas da entrada, mínimo pago até as chaves, taxa mensal para valor presente, comissão total, divisão entre corretor/gerente/diretor/imobiliária (soma ≤ 100%) e regra de pagamento da comissão (`upfront` ou `with_down_payment`, com limite opcional de parcelas). Escrita só owner/admin.
+- **Fluxo de pagamento** (`proposal_payment_items`): sinal, entrada parcelada, mensais, intermediárias, chaves, FGTS e financiamento, com quantidade, valor, 1º vencimento e intervalo. Só muda por `replace_proposal_payment_plan`, que também atualiza a projeção `down_payment`/`fgts_amount`/`financing_amount` da proposta. O fluxo é obrigatório e precisa somar exatamente o valor ofertado para enviar (novas pendências `payment_plan_missing` e `payment_plan_total_mismatch`).
+- **Cópia das regras no envio**: trigger grava `commercial_rules_snapshot` e `analysis_reference_date` quando a proposta entra em análise ou na fila (e no reenvio). A análise de propostas enviadas usa essa cópia; rascunhos usam as regras atuais.
+- **Analisador** (`lib/proposal-analysis.ts`): desconto sobre a tabela, entrada (% e parcelas), % pago até as chaves (fluxo próprio vencido até a entrega + chaves), valor presente e desconto efetivo, impacto no VGV do empreendimento. Veredito: boa proposta, atenção, fora das regras ou sem regras.
+- **Comissão**: total sobre o valor vendido, divisão por papel (papel sem vínculo na proposta fica "não alocado") e parcelas. Em `with_down_payment`, a comissão acompanha cada pagamento de sinal/entrada; com limite de parcelas, os recebimentos são agrupados e cada parcela da comissão vence junto do último recebimento do grupo (nunca antes de o cliente pagar).
+
+Próximas fases: contrato gerado na aprovação, aviso por WhatsApp personalizável e autorização LGPD com entrevista.
 
 ## Fora do escopo desta versão
 

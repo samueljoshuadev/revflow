@@ -426,13 +426,13 @@ begin
   select * into v_buyer from public.proposal_parties
   where proposal_id = p_proposal_id and role = 'buyer';
   if not found then
-    return array['buyer_missing'];
+    return array['buyer_missing']::text[];
   end if;
 
   if v_buyer.marital_status in ('married', 'stable_union') and not exists (
     select 1 from public.proposal_parties where proposal_id = p_proposal_id and role = 'spouse'
   ) then
-    v_missing := v_missing || 'spouse_missing';
+    v_missing := v_missing || 'spouse_missing'::text;
   end if;
 
   for v_party in

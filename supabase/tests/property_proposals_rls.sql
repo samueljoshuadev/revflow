@@ -1,7 +1,7 @@
--- Execute after applying 202611050002_property_proposals.sql.
+-- Execute after applying 202611050002_property_proposals.sql (and 202611050003 if present).
 begin;
 create extension if not exists pgtap;
-select plan(38);
+select plan(39);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -51,6 +51,13 @@ begin
          'organizations/' || v_org || '/proposals/' || p_proposal_id || '/' || gen_random_uuid() || '.pdf',
          t || '.pdf', 'application/pdf', 1000, auth.uid()
   from unnest(array['identity', 'civil_status_certificate', 'income_proof', 'proof_of_residence']) t;
+  -- Fluxo de pagamento (fase 3): parcela única no valor ofertado.
+  if to_regprocedure('public.replace_proposal_payment_plan(uuid, uuid, jsonb)') is not null then
+    perform public.replace_proposal_payment_plan(v_org, p_proposal_id, jsonb_build_array(jsonb_build_object(
+      'kind', 'signal', 'installment_count', 1,
+      'installment_amount', (select offered_price from public.property_proposals where id = p_proposal_id),
+      'first_due_date', current_date::text)));
+  end if;
 end $$;
 grant execute on function public.test_complete_proposal(uuid) to authenticated;
 
@@ -77,6 +84,8 @@ select ok(
   'submit with pending requirements returns the missing list'
 );
 select is((select status from public.property_proposals where id = (select id from ids where name = 'p1')), 'draft', 'incomplete proposal stays as draft');
+update public.proposal_parties set marital_status = 'married' where proposal_id = (select id from ids where name = 'p1') and role = 'buyer';
+select ok('spouse_missing' = any(public.get_proposal_missing_requirements((select id from ids where name = 'p1'))), 'married buyer requires a spouse');
 select lives_ok($$ select public.test_complete_proposal((select id from ids where name = 'p1')) $$, 'broker fills buyer data and documents');
 select is(public.submit_property_proposal('fa000000-0000-0000-0000-000000000001', (select id from ids where name = 'p1')) ->> 'status', 'in_review', 'first complete proposal goes to review');
 select throws_ok($$ update public.property_proposals set status = 'approved' where id = (select id from ids where name = 'p1') $$, '42501', null, 'proposals cannot be updated directly');

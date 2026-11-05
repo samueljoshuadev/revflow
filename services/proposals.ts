@@ -152,7 +152,7 @@ export async function getProposalDetail(
   if (error) throw error;
   if (!proposal) return null;
 
-  const [unitResult, partiesResult, documentsResult, eventsResult, missingResult] =
+  const [unitResult, partiesResult, documentsResult, eventsResult, missingResult, itemsResult] =
     await Promise.all([
       supabase
         .from("development_units")
@@ -183,9 +183,21 @@ export async function getProposalDetail(
         .order("created_at", { ascending: false })
         .limit(50),
       supabase.rpc("get_proposal_missing_requirements", { p_proposal_id: proposalId }),
+      supabase
+        .from("proposal_payment_items")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .eq("proposal_id", proposalId)
+        .order("position")
+        .limit(20),
     ]);
   const firstError =
-    unitResult.error ?? partiesResult.error ?? documentsResult.error ?? eventsResult.error ?? missingResult.error;
+    unitResult.error ??
+    partiesResult.error ??
+    documentsResult.error ??
+    eventsResult.error ??
+    missingResult.error ??
+    itemsResult.error;
   if (firstError) throw firstError;
 
   const unit = unitResult.data;
@@ -198,7 +210,7 @@ export async function getProposalDetail(
     ),
   ];
   const documents = documentsResult.data ?? [];
-  const [developmentResult, profilesResult, partnerResult, leadResult, signedResult] = await Promise.all([
+  const [developmentResult, profilesResult, partnerResult, leadResult, signedResult, rulesResult, overviewResult] = await Promise.all([
     supabase
       .from("developments")
       .select("*")
@@ -229,9 +241,22 @@ export async function getProposalDetail(
           .from("proposal-documents")
           .createSignedUrls(documents.map((document) => document.storage_path), SIGNED_URL_SECONDS)
       : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("development_commercial_rules")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .eq("development_id", unit.development_id)
+      .maybeSingle(),
+    supabase.rpc("get_developments_overview", { p_organization_id: organizationId }),
   ]);
   const secondError =
-    developmentResult.error ?? profilesResult.error ?? partnerResult.error ?? leadResult.error ?? signedResult.error;
+    developmentResult.error ??
+    profilesResult.error ??
+    partnerResult.error ??
+    leadResult.error ??
+    signedResult.error ??
+    rulesResult.error ??
+    overviewResult.error;
   if (secondError) throw secondError;
   const development = developmentResult.data;
   if (!development) return null;
@@ -262,6 +287,12 @@ export async function getProposalDetail(
     missing: missingResult.data ?? [],
     partner_agency: partnerResult.data,
     lead: leadResult.data,
+    payment_items: itemsResult.data ?? [],
+    current_rules: rulesResult.data,
+    development_total_vgv: (() => {
+      const row = (overviewResult.data ?? []).find((item) => item.development_id === unit.development_id);
+      return row ? Number(row.total_vgv) : null;
+    })(),
   };
 }
 

@@ -106,6 +106,9 @@ export type ProposalDetail = ProposalListItem & {
   decided_by_name: string | null;
   partner_agency: Tables<"partner_agencies"> | null;
   lead: { id: string; name: string } | null;
+  payment_items: Tables<"proposal_payment_items">[];
+  current_rules: Tables<"development_commercial_rules"> | null;
+  development_total_vgv: number | null;
 };
 
 export type UnitProposalSummary = {
