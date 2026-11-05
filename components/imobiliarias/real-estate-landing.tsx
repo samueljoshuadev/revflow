@@ -230,11 +230,11 @@ export function RealEstateLanding() {
           <Link
             href="/imobiliarias"
             className={styles.logoLink}
-            aria-label="RevFlow para Imobiliárias"
+            aria-label="Loovimob"
           >
             <Image
-              src="/revflow-imoveis-logo.png"
-              alt="RevFlow"
+              src="/loovimob-logo.png"
+              alt="Loovimob"
               width={380}
               height={110}
               priority
@@ -385,7 +385,7 @@ export function RealEstateLanding() {
       >
         <div className={styles.finalGlow} />
         <Reveal className={styles.finalContent}>
-          <p className={styles.sectionKicker}>RevFlow para Imobiliárias</p>
+          <p className={styles.sectionKicker}>Loovimob</p>
           <h2 id="cta-title">
             Sua equipe sabe qual lead
             <br />
@@ -396,7 +396,7 @@ export function RealEstateLanding() {
             vendas.
           </p>
           <Link className={styles.primaryButton} href="/login">
-            Quero ver o RevFlow em ação <ArrowRight size={17} />
+            Quero ver o Loovimob em ação <ArrowRight size={17} />
           </Link>
         </Reveal>
       </section>
@@ -404,13 +404,13 @@ export function RealEstateLanding() {
       <footer className={styles.footer}>
         <div>
           <Image
-            src="/revflow-imoveis-logo.png"
-            alt="RevFlow"
+            src="/loovimob-logo.png"
+            alt="Loovimob"
             width={242}
             height={70}
             className={styles.footerLogo}
           />
-          <p>RevFlow para Imobiliárias.</p>
+          <p>Loovimob.</p>
         </div>
         <nav aria-label="Links institucionais">
           <a href="/privacidade">Privacidade</a>
@@ -419,11 +419,11 @@ export function RealEstateLanding() {
         </nav>
       </footer>
       <div id="privacidade" className={styles.visuallyHidden}>
-        Privacidade: o RevFlow trata dados comerciais da imobiliária com acesso
+        Privacidade: o Loovimob trata dados comerciais da imobiliária com acesso
         controlado por organização.
       </div>
       <div id="termos" className={styles.visuallyHidden}>
-        Termos: a disponibilidade do RevFlow é definida no contrato da empresa
+        Termos: a disponibilidade do Loovimob é definida no contrato da empresa
         contratante.
       </div>
     </main>

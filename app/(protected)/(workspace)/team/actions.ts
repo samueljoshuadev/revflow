@@ -110,3 +110,96 @@ export async function revokeInvitation(formData: FormData) {
     .eq("id", parsed.data);
   revalidatePath("/team");
 }
+
+/** Define a quem o membro responde (corretor → gerente → diretor) para vincular propostas. */
+export async function setMemberReportsTo(formData: FormData) {
+  const { organization } = await requireWorkspace();
+  requireAdmin(organization.role);
+  const parsed = z
+    .object({
+      userId: z.uuid(),
+      reportsToUserId: z.preprocess(
+        (value) => (value === "" || value === null ? null : value),
+        z.uuid().nullable(),
+      ),
+    })
+    .safeParse({
+      userId: formData.get("userId"),
+      reportsToUserId: formData.get("reportsToUserId"),
+    });
+  if (!parsed.success) redirect("/team?error=Dados+inválidos.");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_member_reports_to", {
+    p_organization_id: organization.id,
+    p_user_id: parsed.data.userId,
+    p_reports_to_user_id: parsed.data.reportsToUserId,
+  });
+  if (error) {
+    console.error("member_hierarchy_update_failed", { code: error.code });
+    redirect(
+      `/team?error=${encodeURIComponent(error.message.includes("invalid_hierarchy") ? "Essa hierarquia criaria um ciclo." : "Não foi possível salvar a hierarquia.")}`,
+    );
+  }
+  revalidatePath("/team");
+  redirect("/team?message=Hierarquia+atualizada.");
+}
+
+const partnerSchema = z.object({
+  name: z.string().trim().min(2).max(180),
+  document: z.preprocess(
+    (value) => (typeof value === "string" ? value.replace(/\D/g, "") || null : null),
+    z.string().regex(/^\d{14}$/).nullable(),
+  ),
+  creci: z.preprocess((value) => (value === "" ? null : value), z.string().trim().min(2).max(40).nullable()),
+  contactName: z.preprocess((value) => (value === "" ? null : value), z.string().trim().min(2).max(180).nullable()),
+  phone: z.preprocess((value) => (value === "" ? null : value), z.string().trim().min(8).max(30).nullable()),
+  email: z.preprocess((value) => (value === "" ? null : value), z.email().max(254).nullable()),
+});
+
+export async function createPartnerAgency(formData: FormData) {
+  const { user, organization } = await requireWorkspace();
+  requireAdmin(organization.role);
+  const parsed = partnerSchema.safeParse({
+    name: formData.get("name"),
+    document: formData.get("document"),
+    creci: formData.get("creci"),
+    contactName: formData.get("contactName"),
+    phone: formData.get("phone"),
+    email: formData.get("email"),
+  });
+  if (!parsed.success) redirect("/team?error=Revise+os+dados+da+imobiliária+(CNPJ+com+14+dígitos).");
+  const supabase = await createClient();
+  const { error } = await supabase.from("partner_agencies").insert({
+    organization_id: organization.id,
+    name: parsed.data.name,
+    document: parsed.data.document,
+    creci: parsed.data.creci,
+    contact_name: parsed.data.contactName,
+    phone: parsed.data.phone,
+    email: parsed.data.email?.toLowerCase() ?? null,
+    created_by: user.id,
+  });
+  if (error) {
+    console.error("partner_agency_creation_failed", { code: error.code });
+    redirect(
+      `/team?error=${error.code === "23505" ? "Já+existe+uma+imobiliária+com+esse+nome." : "Não+foi+possível+cadastrar+a+imobiliária."}`,
+    );
+  }
+  revalidatePath("/team");
+  redirect("/team?message=Imobiliária+parceira+cadastrada.");
+}
+
+export async function archivePartnerAgency(formData: FormData) {
+  const { organization } = await requireWorkspace();
+  requireAdmin(organization.role);
+  const parsed = z.uuid().safeParse(formData.get("partnerId"));
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("partner_agencies")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("organization_id", organization.id)
+    .eq("id", parsed.data);
+  if (error) console.error("partner_agency_archive_failed", { code: error.code });
+  revalidatePath("/team");
+}

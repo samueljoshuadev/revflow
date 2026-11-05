@@ -260,7 +260,7 @@ describe("critical boundary contracts", () => {
 
 describe("bounded request bodies", () => {
   it("reads valid JSON below the byte limit", async () => {
-    const request = new Request("https://revflow.example/api", {
+    const request = new Request("https://loovimob.example/api", {
       method: "POST",
       body: JSON.stringify({ name: "Lead" }),
       headers: { "content-type": "application/json" },
@@ -271,7 +271,7 @@ describe("bounded request bodies", () => {
   });
 
   it("rejects streamed content that exceeds the real limit", async () => {
-    const request = new Request("https://revflow.example/api", {
+    const request = new Request("https://loovimob.example/api", {
       method: "POST",
       body: JSON.stringify({ content: "x".repeat(100) }),
       headers: { "content-type": "application/json" },

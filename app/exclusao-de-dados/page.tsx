@@ -13,7 +13,7 @@ export default function DataDeletionPage() {
       </LegalSection>
       <LegalSection title="Confirmação de identidade">
         <p>
-          Para impedir exclusões indevidas, o RevFlow poderá confirmar a
+          Para impedir exclusões indevidas, o Loovimob poderá confirmar a
           identidade e a autoridade do solicitante dentro da organização.
         </p>
       </LegalSection>
@@ -26,7 +26,7 @@ export default function DataDeletionPage() {
       </LegalSection>
       <LegalSection title="Integrações externas">
         <p>
-          A exclusão no RevFlow não remove automaticamente dados mantidos por
+          A exclusão no Loovimob não remove automaticamente dados mantidos por
           provedores conectados. O titular ou administrador também deve utilizar
           os controles oferecidos por cada provedor.
         </p>

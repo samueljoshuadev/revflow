@@ -17,7 +17,7 @@ export function LegalPage({
           href="/"
           className="inline-flex items-center gap-2 text-xs font-medium text-gray-500"
         >
-          <ArrowLeft className="size-3.5" /> Voltar ao RevFlow
+          <ArrowLeft className="size-3.5" /> Voltar ao Loovimob
         </Link>
         <div className="mt-8 flex items-start gap-4">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
@@ -40,7 +40,7 @@ export function LegalPage({
           {children}
         </div>
         <footer className="mt-10 border-t border-gray-100 pt-6 text-xs text-gray-400">
-          Solicitações podem ser iniciadas pelo contato oficial do RevFlow:{" "}
+          Solicitações podem ser iniciadas pelo contato oficial do Loovimob:{" "}
           <a
             className="font-medium text-violet-700"
             href="https://wa.me/5511988407914"

@@ -245,7 +245,7 @@ function friendlyMetaError(code: string) {
   if (code.includes("phone"))
     return "A Meta não confirmou o número selecionado. Escolha um número do WhatsApp Business.";
   if (code.includes("platform_not_ready"))
-    return "O aplicativo Meta do RevFlow ainda precisa ser configurado pelo administrador.";
+    return "O aplicativo Meta do Loovimob ainda precisa ser configurado pelo administrador.";
   if (code.includes("timeout"))
     return "A autorização demorou demais. Feche a janela e tente novamente.";
   return "Não foi possível concluir a conexão com a Meta. Tente novamente ou consulte a ajuda.";

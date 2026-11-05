@@ -4,6 +4,26 @@
 
 Os fatos `property_created`, `property_updated`, `property_deleted`, `property_recommended`, `property_match_updated`, `property_match_removed`, `real_estate_profile_created`, `real_estate_profile_updated` e `visit_rescheduled` são append-only. Eles são registrados em `lead_events`, `real_estate_events` ou em ambos, conforme a entidade afetada. Os eventos existentes de reunião continuam registrando cancelamento, conclusão e ausência.
 
+### Espelho de vendas
+
+Registrados em `real_estate_events` por triggers `security definer`, na mesma transação da alteração:
+
+- `development_created`, `development_updated`, `development_archived` (`entity_type = development`; metadata: `name`, `stage`);
+- `unit_status_changed` (`entity_type = development_unit`; metadata: `development_id`, `code`, `from`, `to`);
+- `unit_price_changed` (`entity_type = development_unit`; metadata: `development_id`, `code`, `from`, `to`).
+
+O status `in_proposal` é reservado ao fluxo de propostas (fase 2) e não pode ser definido manualmente pela interface.
+
+### Propostas por unidade
+
+Registrados por `private.record_proposal_event` em `real_estate_events` (`entity_type = proposal`) e, quando a proposta tem lead, também em `lead_events`, na mesma transação da função que mudou a proposta:
+
+`proposal_created`, `proposal_submitted`, `proposal_resubmitted`, `proposal_queued`, `proposal_promoted`, `proposal_approved`, `proposal_rejected`, `proposal_countered`, `proposal_cancelled`, `proposal_expired` e `proposal_sla_breached`.
+
+Metadata base: `proposal_id`, `number`, `unit_id`, `status`; extras por evento (`queue_position`, `counter_offer_price`, `reason`). Não contém dados pessoais do comprador.
+
+Envio, aprovação e recusa com lead vinculado acionam a automação do Kanban com as chaves existentes `proposal_sent`, `proposal_accepted` e `proposal_rejected` (idempotência por `property_proposal_<evento>:<id>`).
+
 ## Contrato
 
 Cada linha de `lead_events` contém:

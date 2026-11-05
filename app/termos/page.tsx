@@ -5,7 +5,7 @@ export default function TermsPage() {
     <LegalPage title="Termos de Uso" updatedAt="15 de agosto de 2026">
       <LegalSection title="Uso do serviço">
         <p>
-          O RevFlow é uma ferramenta de apoio à operação comercial. A empresa
+          O Loovimob é uma ferramenta de apoio à operação comercial. A empresa
           contratante é responsável pelos dados cadastrados, pelas permissões
           concedidas aos usuários e pela legalidade de suas comunicações.
         </p>
@@ -20,7 +20,7 @@ export default function TermsPage() {
       <LegalSection title="Integrações">
         <p>
           Google, Meta, OpenAI, Calendly e outros serviços possuem termos,
-          disponibilidade e cobrança próprios. O RevFlow não promete
+          disponibilidade e cobrança próprios. O Loovimob não promete
           funcionamento de integrações que não estejam autorizadas ou
           configuradas.
         </p>

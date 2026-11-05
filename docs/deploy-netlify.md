@@ -1,4 +1,4 @@
-# Deploy do RevFlow na Netlify
+# Deploy do Loovimob na Netlify
 
 O projeto já está preparado para rodar como aplicação Next.js na Netlify. O
 arquivo `netlify.toml` configura o build, o runtime Next.js e o Node 20.
@@ -6,7 +6,7 @@ arquivo `netlify.toml` configura o build, o runtime Next.js e o Node 20.
 ## 1. Importar o projeto
 
 No painel da Netlify, escolha **Add new site → Import an existing project** e
-conecte o repositório do RevFlow. Não é necessário trocar o comando de build:
+conecte o repositório do Loovimob. Não é necessário trocar o comando de build:
 
 - Build command: `npm run build`
 - Publish directory: `.next`
@@ -37,7 +37,7 @@ redirect URI para:
 
 `https://SEU-DOMINIO/api/integrations/google/callback`
 
-Depois de alterar a URL, reconecte a integração do Google no RevFlow.
+Depois de alterar a URL, reconecte a integração do Google no Loovimob.
 
 ## 4. Validar após publicar
 

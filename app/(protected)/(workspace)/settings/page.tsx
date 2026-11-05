@@ -1,6 +1,7 @@
 import {
   CalendarRange,
   CheckCircle2,
+  Clock3,
   PlugZap,
   Plus,
   Workflow,
@@ -13,7 +14,11 @@ import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 import { requireWorkspace } from "@/services/workspace";
 
-import { createService, updateOrganizationSettings } from "./actions";
+import {
+  createService,
+  updateOrganizationSettings,
+  updateProposalSettings,
+} from "./actions";
 
 export const metadata = { title: "Configurações" };
 
@@ -225,6 +230,26 @@ export default async function SettingsPage({
           </button>
         )}
       </form>
+
+      {isRealEstate && (
+        <form action={updateProposalSettings} className="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-xs sm:p-6">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <Clock3 className="size-4 text-brand" /> Prazo das propostas
+          </h2>
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            Tempo para a incorporadora analisar uma proposta (corretor e gerente são avisados quando vence) e para o corretor responder uma contraproposta (depois disso ela expira e a unidade é liberada).
+          </p>
+          <div className="mt-4 flex items-end gap-3">
+            <div className="w-40">
+              <Label htmlFor="proposalSlaHours">Prazo (horas)</Label>
+              <Input id="proposalSlaHours" name="proposalSlaHours" type="number" min={1} max={720} defaultValue={organization.proposal_sla_hours} required disabled={!canAdmin} />
+            </div>
+            {canAdmin && (
+              <button className="h-10 rounded-lg bg-gray-950 px-4 text-sm font-medium text-white hover:bg-gray-800">Salvar prazo</button>
+            )}
+          </div>
+        </form>
+      )}
 
       {!isRealEstate && (
         <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-xs sm:p-6">

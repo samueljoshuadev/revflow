@@ -48,7 +48,7 @@ export default async function CapturePage({
           </div>
         </section>
         <p className="mt-5 text-center text-[11px] text-gray-400">
-          Formulário protegido pelo RevFlow
+          Formulário protegido pelo Loovimob
         </p>
       </div>
     </main>

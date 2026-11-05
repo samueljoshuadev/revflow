@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <LegalPage title="Política de Privacidade" updatedAt="15 de agosto de 2026">
       <LegalSection title="Escopo">
         <p>
-          Esta versão descreve como o RevFlow trata dados usados por empresas
+          Esta versão descreve como o Loovimob trata dados usados por empresas
           para organizar leads, reuniões, propostas e atividades comerciais.
         </p>
       </LegalSection>
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
       </LegalSection>
       <LegalSection title="Retenção e segurança">
         <p>
-          O RevFlow aplica isolamento por organização, controle de acesso,
+          O Loovimob aplica isolamento por organização, controle de acesso,
           trilha de eventos e proteção de credenciais. Os prazos definitivos de
           retenção devem constar no contrato e na versão revisada desta
           política.

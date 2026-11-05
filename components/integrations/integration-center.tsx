@@ -475,7 +475,7 @@ function HelpDialog({
           <div className="mt-8 rounded-xl border border-blue-100 bg-blue-50 p-4">
             <p className="text-xs font-semibold text-blue-900">Importante</p>
             <p className="mt-1 text-xs leading-5 text-blue-700">
-              No fluxo Meta/Facebook, sua senha nunca passa pelo RevFlow. Na
+              No fluxo Meta/Facebook, sua senha nunca passa pelo Loovimob. Na
               configuração manual, não envie tokens, chaves ou senhas por
               mensagem.
             </p>
