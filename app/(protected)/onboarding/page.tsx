@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, Check, House, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, Check, ShieldCheck } from "lucide-react";
 
 import { Brand } from "@/components/brand";
 import { Input, Label } from "@/components/ui/field";
@@ -16,7 +16,7 @@ export default async function OnboardingPage({
     <main className="flex min-h-screen items-center justify-center bg-[#f5f6fa] p-6">
       <div className="w-full max-w-lg animate-fade-up">
         <div className="mb-8 flex justify-center">
-          <Brand />
+          <Brand vertical="real_estate" />
         </div>
         <section className="rounded-2xl border border-gray-200/80 bg-white p-7 shadow-xl shadow-gray-200/40 sm:p-9">
           <div className="flex size-11 items-center justify-center rounded-xl bg-violet-50 text-brand">
@@ -26,8 +26,8 @@ export default async function OnboardingPage({
             Configure sua operação
           </h1>
           <p className="mt-2 text-sm leading-6 text-gray-500">
-            Escolha o modelo da empresa. O RevFlow configura a identidade e o
-            pipeline adequados sem misturar seus dados.
+            Informe o nome da imobiliária ou incorporadora. O Loovimob cria o
+            funil de vendas pronto para usar.
           </p>
 
           {error && (
@@ -37,46 +37,9 @@ export default async function OnboardingPage({
           )}
 
           <form action={createOrganization} className="mt-7">
-            <fieldset>
-              <legend className="text-xs font-medium text-gray-700">
-                Qual é o tipo da sua empresa?
-              </legend>
-              <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                <label className="relative cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50">
-                  <input
-                    type="radio"
-                    name="vertical"
-                    value="agency"
-                    defaultChecked
-                    className="sr-only"
-                  />
-                  <Building2 className="size-5 text-violet-600" />
-                  <span className="mt-3 block text-sm font-semibold text-gray-900">
-                    Agência
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-gray-500">
-                    Leads, propostas, clientes e projetos.
-                  </span>
-                </label>
-                <label className="relative cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition has-[:checked]:border-amber-400 has-[:checked]:bg-[#FFF6D8]">
-                  <input
-                    type="radio"
-                    name="vertical"
-                    value="real_estate"
-                    className="sr-only"
-                  />
-                  <House className="size-5 text-[#C77B08]" />
-                  <span className="mt-3 block text-sm font-semibold text-gray-900">
-                    Imobiliária
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-gray-500">
-                    Imóveis, visitas, corretores e matching.
-                  </span>
-                </label>
-              </div>
-            </fieldset>
+            <input type="hidden" name="vertical" value="real_estate" />
             <div className="mt-5">
-            <Label htmlFor="name">Nome da agência ou empresa</Label>
+            <Label htmlFor="name">Nome da imobiliária ou incorporadora</Label>
             <Input
               id="name"
               name="name"

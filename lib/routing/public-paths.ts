@@ -1,10 +1,7 @@
 const exactPublicPaths = new Set([
   "/",
   "/login",
-  "/agencias",
   "/imobiliarias",
-  "/como-funciona",
-  "/precos",
   "/privacidade",
   "/termos",
   "/exclusao-de-dados",

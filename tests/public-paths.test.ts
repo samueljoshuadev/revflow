@@ -6,20 +6,17 @@ describe("public routes", () => {
   it.each([
     "/",
     "/login",
-    "/agencias",
     "/imobiliarias",
-    "/como-funciona",
-    "/precos",
     "/privacidade",
     "/termos",
     "/exclusao-de-dados",
     "/auth/callback",
-    "/book/revflow",
+    "/book/loovimob",
     "/api/health",
     "/api/webhooks/whatsapp/connection",
     "/api/webhooks/whatsapp/meta",
-    "/capture/revflow/site",
-    "/api/public/leads/revflow/site",
+    "/capture/loovimob/site",
+    "/api/public/leads/loovimob/site",
     "/api/cron/follow-ups",
   ])("allows %s without a session", (pathname) => {
     expect(isPublicPath(pathname)).toBe(true);

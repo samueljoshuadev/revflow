@@ -1,8 +1,8 @@
-# RevFlow para Imobiliárias
+# Loovimob
 
 ## Visão geral
 
-A vertical imobiliária utiliza o mesmo aplicativo, autenticação, banco e isolamento multi-tenant do RevFlow para Agências. A coluna `organizations.vertical` determina identidade visual, navegação, pipeline inicial e recursos disponíveis para a organização ativa.
+O Loovimob atende somente imobiliárias e incorporadoras; a vertical de agências foi removida da interface. A coluna `organizations.vertical` determina identidade visual, navegação, pipeline inicial e recursos disponíveis para a organização ativa.
 
 - `agency`: experiência existente, roxa.
 - `real_estate`: experiência âmbar, imóveis, visitas, matching e relatórios imobiliários.

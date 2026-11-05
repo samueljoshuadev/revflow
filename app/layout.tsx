@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "RevFlow",
-    template: "%s · RevFlow",
+    default: "Loovimob",
+    template: "%s · Loovimob",
   },
   description:
     "Revenue operations para organizar leads, pipeline e o fluxo comercial da sua agência.",

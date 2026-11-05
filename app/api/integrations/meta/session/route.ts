@@ -43,8 +43,8 @@ export async function GET() {
     path: "/api/integrations/meta",
     maxAge: 10 * 60,
   };
-  cookieStore.set("revflow_meta_signup_token", sessionToken, options);
-  cookieStore.set("revflow_meta_signup_org", organization.id, options);
+  cookieStore.set("loovimob_meta_signup_token", sessionToken, options);
+  cookieStore.set("loovimob_meta_signup_org", organization.id, options);
 
   return NextResponse.json(
     { appId, configurationId, graphVersion, sessionToken },

@@ -9,7 +9,7 @@ import { requireUser } from "@/services/auth";
 
 const organizationSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  vertical: z.enum(["agency", "real_estate"]),
+  vertical: z.literal("real_estate"),
 });
 
 function slugify(value: string) {
@@ -32,7 +32,7 @@ export async function createOrganization(formData: FormData) {
 
   const supabase = await createClient();
   const uniqueSuffix = crypto.randomUUID().slice(0, 6);
-  const slug = `${slugify(parsed.data.name) || (parsed.data.vertical === "real_estate" ? "imobiliaria" : "agencia")}-${uniqueSuffix}`;
+  const slug = `${slugify(parsed.data.name) || "imobiliaria"}-${uniqueSuffix}`;
   const { error } = await supabase.rpc("create_organization_with_vertical", {
     p_name: parsed.data.name,
     p_slug: slug,

@@ -2,7 +2,7 @@
 
 ## Verticais por organização
 
-O RevFlow permanece um único SaaS multi-tenant. `organizations.vertical` seleciona `agency` ou `real_estate`; o layout protegido recebe a vertical da organização ativa e aplica navegação, logo e variáveis CSS sem duplicar autenticação, banco ou componentes estruturais. A vertical imobiliária é documentada em `docs/real-estate.md`.
+O Loovimob permanece um único SaaS multi-tenant. `organizations.vertical` seleciona `agency` ou `real_estate`; o layout protegido recebe a vertical da organização ativa e aplica navegação, logo e variáveis CSS sem duplicar autenticação, banco ou componentes estruturais. A vertical imobiliária é documentada em `docs/real-estate.md`.
 
 ## Visão geral
 

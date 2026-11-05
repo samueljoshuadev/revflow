@@ -38,13 +38,13 @@ export async function POST(request: NextRequest) {
   }
 
   const cookieStore = await cookies();
-  const expectedToken = cookieStore.get("revflow_meta_signup_token")?.value;
+  const expectedToken = cookieStore.get("loovimob_meta_signup_token")?.value;
   const expectedOrganizationId = cookieStore.get(
-    "revflow_meta_signup_org",
+    "loovimob_meta_signup_org",
   )?.value;
   const clearSession = () => {
-    cookieStore.delete("revflow_meta_signup_token");
-    cookieStore.delete("revflow_meta_signup_org");
+    cookieStore.delete("loovimob_meta_signup_token");
+    cookieStore.delete("loovimob_meta_signup_org");
   };
 
   let input: z.infer<typeof completeSchema>;

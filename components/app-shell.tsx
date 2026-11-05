@@ -4,14 +4,11 @@ import {
   Bell,
   CalendarDays,
   ChevronDown,
-  CheckSquare2,
   ContactRound,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
   Menu,
-  MessageCircle,
-  PanelTop,
   Building2,
   BarChart3,
   Grid3x3,
@@ -33,22 +30,12 @@ import { Brand } from "@/components/brand";
 import { cn, initials } from "@/lib/utils";
 import type { OrganizationVertical } from "@/types/database";
 
-const agencyNavigation: Array<{
+const navigation: Array<{
   label: string;
   href: string;
   icon: typeof LayoutDashboard;
   disabled?: boolean;
 }> = [
-  { label: "Visão geral", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Pipeline", href: "/pipeline", icon: PanelTop },
-  { label: "Leads", href: "/leads", icon: ContactRound },
-  { label: "Agenda", href: "/calendar", icon: CalendarDays },
-  { label: "Tarefas", href: "/tasks", icon: CheckSquare2 },
-  { label: "WhatsApp", href: "/messages", icon: MessageCircle },
-  { label: "Clientes", href: "/clients", icon: Users },
-];
-
-const realEstateNavigation: typeof agencyNavigation = [
   { label: "Visão geral", href: "/dashboard", icon: LayoutDashboard },
   { label: "Leads", href: "/leads", icon: ContactRound },
   { label: "Empreendimentos", href: "/developments", icon: Grid3x3 },
@@ -88,8 +75,6 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isRealEstate = organizationVertical === "real_estate";
-  const navigation = isRealEstate ? realEstateNavigation : agencyNavigation;
 
   const sidebar = (
     <>
@@ -269,7 +254,7 @@ export function AppShell({
             <Menu className="size-5" />
           </button>
           <form
-            action={isRealEstate ? "/properties" : "/leads"}
+            action={"/properties"}
             className="relative hidden w-full max-w-sm sm:block"
           >
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
@@ -277,9 +262,9 @@ export function AppShell({
               name="q"
               className="h-9 w-full rounded-lg border-0 bg-gray-100/80 pr-16 pl-9 text-sm placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-violet-200"
               placeholder={
-                isRealEstate ? "Buscar imóveis..." : "Buscar leads..."
+                "Buscar imóveis..."
               }
-              aria-label={isRealEstate ? "Buscar imóveis" : "Buscar leads"}
+              aria-label={"Buscar imóveis"}
             />
             <kbd className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[9px] text-gray-400">
               ⌘ K
@@ -294,12 +279,12 @@ export function AppShell({
               <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-brand ring-2 ring-white" />
             </button>
             <Link
-              href={isRealEstate ? "/properties/new" : "/leads/new"}
+              href={"/properties/new"}
               className="ml-1 inline-flex h-9 items-center gap-2 rounded-lg bg-gray-950 px-3.5 text-xs font-medium text-white shadow-sm transition hover:bg-gray-800"
             >
               <Plus className="size-4" />
               <span className="hidden sm:inline">
-                {isRealEstate ? "Novo imóvel" : "Novo lead"}
+                {"Novo imóvel"}
               </span>
             </Link>
           </div>

@@ -1,6 +1,6 @@
-# RevFlow
+# Loovimob
 
-CRM multi-tenant orientado a eventos para agências. Não injeta leads, métricas ou
+CRM multi-tenant orientado a eventos para imobiliárias e incorporadoras. Não injeta leads, métricas ou
 análises fictícias: toda área operacional lê e grava no Supabase protegido por
 RLS.
 

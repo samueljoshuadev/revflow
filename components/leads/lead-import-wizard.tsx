@@ -138,7 +138,7 @@ export function LeadImportWizard({
     );
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "revflow-erros-importacao.csv";
+    anchor.download = "loovimob-erros-importacao.csv";
     anchor.click();
     URL.revokeObjectURL(url);
   }

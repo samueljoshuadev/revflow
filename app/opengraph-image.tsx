@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "RevFlow — operação comercial em movimento";
+export const alt = "Loovimob — operação comercial em movimento";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -33,7 +33,7 @@ export default function OpenGraphImage() {
         >
           ↗
         </div>
-        <span style={{ fontSize: "34px", fontWeight: 700 }}>RevFlow</span>
+        <span style={{ fontSize: "34px", fontWeight: 700 }}>Loovimob</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         <span style={{ color: "#c8c0ff", fontSize: "23px", letterSpacing: "4px" }}>
@@ -47,7 +47,7 @@ export default function OpenGraphImage() {
         </span>
       </div>
       <span style={{ color: "#d6dbe6", fontSize: "24px" }}>
-        Para agências e imobiliárias
+        Para imobiliárias e incorporadoras
       </span>
     </div>,
     size,

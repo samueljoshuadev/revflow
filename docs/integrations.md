@@ -65,7 +65,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 INTEGRATION_ENCRYPTION_KEY=
 ```
 
-### Preparação única do RevFlow na Meta
+### Preparação única do Loovimob na Meta
 
 1. Crie ou use um aplicativo empresarial em Meta for Developers e adicione o
    produto WhatsApp.
@@ -76,7 +76,7 @@ INTEGRATION_ENCRYPTION_KEY=
    `whatsapp_business_management` e `whatsapp_business_messaging`, e conclua a
    verificação/revisão exigida pela Meta para atender empresas fora dos papéis
    de teste do aplicativo.
-4. Cadastre o domínio de produção do RevFlow nos domínios permitidos do
+4. Cadastre o domínio de produção do Loovimob nos domínios permitidos do
    aplicativo.
 5. No webhook do objeto `whatsapp_business_account`, use:
 

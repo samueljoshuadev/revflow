@@ -32,7 +32,7 @@ export const integrationCatalog: IntegrationDefinition[] = [
       {
         title: "Autorize o calendário",
         description:
-          "Confira o nome RevFlow e permita o acesso solicitado. Sua senha nunca passa pelo RevFlow.",
+          "Confira o nome Loovimob e permita o acesso solicitado. Sua senha nunca passa pelo Loovimob.",
       },
       {
         title: "Volte e teste",
@@ -83,7 +83,7 @@ export const integrationCatalog: IntegrationDefinition[] = [
       {
         title: "Clique em Conectar com Meta",
         description:
-          "Entre com a conta do Facebook que administra o Portfólio Empresarial da sua empresa. Sua senha não passa pelo RevFlow.",
+          "Entre com a conta do Facebook que administra o Portfólio Empresarial da sua empresa. Sua senha não passa pelo Loovimob.",
         link: {
           label: "Conhecer o WhatsApp Business",
           href: "https://whatsappbusiness.com/developers/developer-hub/",
@@ -92,12 +92,12 @@ export const integrationCatalog: IntegrationDefinition[] = [
       {
         title: "Escolha a empresa e o número",
         description:
-          "A própria Meta mostrará as contas WhatsApp Business disponíveis. Selecione a empresa e o número que o RevFlow deverá atender.",
+          "A própria Meta mostrará as contas WhatsApp Business disponíveis. Selecione a empresa e o número que o Loovimob deverá atender.",
       },
       {
         title: "Autorize e confirme",
         description:
-          "Autorize as permissões solicitadas. O RevFlow valida o número, protege a credencial e ativa o recebimento de eventos automaticamente.",
+          "Autorize as permissões solicitadas. O Loovimob valida o número, protege a credencial e ativa o recebimento de eventos automaticamente.",
       },
     ],
   },

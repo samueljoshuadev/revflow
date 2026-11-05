@@ -75,7 +75,7 @@ export function SetupRequired() {
           </section>
         </div>
         <p className="flex items-center gap-2 text-xs text-slate-600">
-          <ArrowUpRight className="size-3.5" /> RevFlow · Revenue operations em movimento
+          <ArrowUpRight className="size-3.5" /> Loovimob · Revenue operations em movimento
         </p>
       </div>
     </main>
