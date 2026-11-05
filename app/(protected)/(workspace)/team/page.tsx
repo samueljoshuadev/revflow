@@ -1,15 +1,19 @@
-import { Copy, MailPlus, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { Building, Copy, MailPlus, Network, ShieldCheck, Trash2, UserRound } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Input, Label, Select } from "@/components/ui/field";
 import { createClient } from "@/lib/supabase/server";
 import { getOrganizationMembers } from "@/services/organizations";
+import { listPartnerAgencies } from "@/services/proposals";
 import { requireWorkspace } from "@/services/workspace";
 
 import {
+  archivePartnerAgency,
   createInvitation,
+  createPartnerAgency,
   removeMember,
   revokeInvitation,
+  setMemberReportsTo,
   updateMemberRole,
 } from "./actions";
 
@@ -25,7 +29,7 @@ const roleLabels = {
 export default async function TeamPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; invite?: string }>;
+  searchParams: Promise<{ error?: string; invite?: string; message?: string }>;
 }) {
   const params = await searchParams;
   const { user, organization } = await requireWorkspace();
@@ -42,6 +46,12 @@ export default async function TeamPage({
   ]);
   if (error) throw error;
   const canAdmin = ["owner", "admin"].includes(organization.role);
+  const isRealEstate = organization.vertical === "real_estate";
+  const partners = isRealEstate ? await listPartnerAgencies(organization.id) : [];
+  const memberName = (userId: string | null) => {
+    const found = members.find((item) => item.user_id === userId);
+    return found ? (found.profile?.full_name ?? "Membro") : null;
+  };
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
@@ -53,6 +63,11 @@ export default async function TeamPage({
       {params.error && (
         <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {params.error}
+        </p>
+      )}
+      {params.message && (
+        <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {params.message}
         </p>
       )}
       {params.invite && (
@@ -90,6 +105,7 @@ export default async function TeamPage({
                     </p>
                     <p className="mt-0.5 text-xs text-gray-400">
                       {roleLabels[member.role]}
+                      {isRealEstate && member.reports_to_user_id && ` · responde a ${memberName(member.reports_to_user_id)}`}
                     </p>
                   </div>
                 </div>
@@ -215,6 +231,71 @@ export default async function TeamPage({
           </aside>
         )}
       </div>
+
+      {isRealEstate && canAdmin && (
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900"><Network className="size-4 text-brand-dark" /> Hierarquia comercial</h2>
+            <p className="mt-1 text-xs leading-5 text-gray-500">
+              Defina a quem cada pessoa responde (corretor → gerente → diretor). Ao criar uma proposta, gerente e diretor são vinculados automaticamente e passam a acompanhá-la.
+            </p>
+            <ul className="mt-4 divide-y divide-gray-100">
+              {members.map((member) => (
+                <li key={member.user_id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-gray-800">{member.profile?.full_name ?? "Membro"}</span>
+                  <form action={setMemberReportsTo} className="flex gap-2">
+                    <input type="hidden" name="userId" value={member.user_id} />
+                    <Select name="reportsToUserId" defaultValue={member.reports_to_user_id ?? ""} aria-label={`Responsável de ${member.profile?.full_name ?? "membro"}`} className="h-8 w-48 text-xs">
+                      <option value="">Não responde a ninguém</option>
+                      {members
+                        .filter((candidate) => candidate.user_id !== member.user_id)
+                        .map((candidate) => (
+                          <option key={candidate.user_id} value={candidate.user_id}>{candidate.profile?.full_name ?? "Membro"}</option>
+                        ))}
+                    </Select>
+                    <button className="h-8 rounded-lg border border-gray-200 px-2.5 text-xs text-gray-600">Salvar</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900"><Building className="size-4 text-brand-dark" /> Imobiliárias parceiras</h2>
+            <p className="mt-1 text-xs leading-5 text-gray-500">Vinculadas às propostas que vêm de fora da equipe própria.</p>
+            {partners.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {partners.map((partner) => (
+                  <li key={partner.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-gray-900">{partner.name}</span>
+                      <span className="block truncate text-[11px] text-gray-500">{[partner.creci && `CRECI ${partner.creci}`, partner.contact_name, partner.phone].filter(Boolean).join(" · ")}</span>
+                    </span>
+                    <form action={archivePartnerAgency}>
+                      <input type="hidden" name="partnerId" value={partner.id} />
+                      <button aria-label={`Arquivar ${partner.name}`} className="flex size-8 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="size-4" /></button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form action={createPartnerAgency} className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label htmlFor="partner-name">Nome da imobiliária</Label>
+                <Input id="partner-name" name="name" required minLength={2} maxLength={180} />
+              </div>
+              <div><Label htmlFor="partner-document">CNPJ</Label><Input id="partner-document" name="document" inputMode="numeric" maxLength={18} /></div>
+              <div><Label htmlFor="partner-creci">CRECI</Label><Input id="partner-creci" name="creci" maxLength={40} /></div>
+              <div><Label htmlFor="partner-contact">Contato</Label><Input id="partner-contact" name="contactName" maxLength={180} /></div>
+              <div><Label htmlFor="partner-phone">Telefone</Label><Input id="partner-phone" name="phone" type="tel" maxLength={30} /></div>
+              <div className="sm:col-span-2"><Label htmlFor="partner-email">E-mail</Label><Input id="partner-email" name="email" type="email" maxLength={254} /></div>
+              <div className="flex justify-end sm:col-span-2">
+                <button className="h-9 rounded-lg bg-brand px-4 text-xs font-semibold text-[#172033] hover:bg-brand-dark hover:text-white">Cadastrar imobiliária</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

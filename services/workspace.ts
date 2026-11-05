@@ -19,3 +19,12 @@ export async function requireRealEstateWorkspace() {
   }
   return workspace;
 }
+
+/** Workspace imobiliário com papel owner/admin; usado para editar o espelho. */
+export async function requireRealEstateAdmin(redirectTo = "/developments") {
+  const workspace = await requireRealEstateWorkspace();
+  if (!["owner", "admin"].includes(workspace.organization.role)) {
+    redirect(`${redirectTo}?error=Apenas+administradores+podem+alterar+o+espelho.`);
+  }
+  return workspace;
+}

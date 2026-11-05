@@ -178,3 +178,29 @@ export async function switchOrganization(formData: FormData) {
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
+
+/** Prazo (em horas) para a incorporadora analisar e para o corretor responder contraproposta. */
+export async function updateProposalSettings(formData: FormData) {
+  const { organization } = await requireWorkspace();
+  if (!["owner", "admin"].includes(organization.role) || organization.vertical !== "real_estate") {
+    redirect("/settings?error=Somente+administradores+podem+alterar+as+configurações.");
+  }
+  const parsed = z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(720)
+    .safeParse(formData.get("proposalSlaHours"));
+  if (!parsed.success) redirect("/settings?error=Informe+um+prazo+entre+1+e+720+horas.");
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("organizations")
+    .update({ proposal_sla_hours: parsed.data })
+    .eq("id", organization.id);
+  if (error) {
+    console.error("proposal_settings_update_failed", { code: error.code });
+    redirect("/settings?error=Não+foi+possível+salvar+o+prazo.");
+  }
+  revalidatePath("/settings");
+  redirect("/settings?message=Prazo+das+propostas+atualizado.");
+}

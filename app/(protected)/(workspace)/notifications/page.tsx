@@ -52,7 +52,15 @@ export default async function NotificationsPage() {
                 </p>
               </div>
               <div className="flex shrink-0 items-start gap-2">
-                {item.lead_id && (
+                {item.action_path ? (
+                  <Link
+                    href={item.action_path}
+                    aria-label="Abrir"
+                    className="rounded-lg border border-gray-200 p-2 text-gray-500"
+                  >
+                    <ExternalLink className="size-3.5" />
+                  </Link>
+                ) : item.lead_id && (
                   <Link
                     href={`/leads/${item.lead_id}`}
                     aria-label="Abrir lead"

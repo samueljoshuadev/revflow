@@ -14,6 +14,8 @@ import {
   PanelTop,
   Building2,
   BarChart3,
+  Grid3x3,
+  FileSignature,
   PlugZap,
   Plus,
   Search,
@@ -49,6 +51,8 @@ const agencyNavigation: Array<{
 const realEstateNavigation: typeof agencyNavigation = [
   { label: "Visão geral", href: "/dashboard", icon: LayoutDashboard },
   { label: "Leads", href: "/leads", icon: ContactRound },
+  { label: "Empreendimentos", href: "/developments", icon: Grid3x3 },
+  { label: "Propostas", href: "/proposals", icon: FileSignature },
   { label: "Imóveis", href: "/properties", icon: Building2 },
   { label: "Visitas", href: "/visits", icon: CalendarDays },
   { label: "Agenda", href: "/calendar", icon: CalendarDays },

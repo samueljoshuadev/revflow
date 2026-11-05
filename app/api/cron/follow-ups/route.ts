@@ -31,6 +31,19 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
+  const { data: proposals, error: proposalError } = await admin.rpc(
+    "process_proposal_deadlines",
+    { p_limit: 200 },
+  );
+  if (proposalError) {
+    console.error("proposal_deadline_processing_failed", {
+      code: proposalError.code,
+    });
+    return NextResponse.json(
+      { error: "proposal_deadline_processing_failed" },
+      { status: 500 },
+    );
+  }
   const { data: outbox, error: claimError } = await admin.rpc(
     "claim_notification_outbox",
     { p_limit: 50 },
@@ -61,6 +74,7 @@ export async function GET(request: NextRequest) {
   }
   return NextResponse.json({
     followUps,
+    proposals,
     delivery: { claimed: outbox?.length ?? 0, sent, failed, blocked },
   });
 }
@@ -78,7 +92,7 @@ async function deliverEmail(
     admin.auth.admin.getUserById(userId),
     admin
       .from("notifications")
-      .select("title, body, lead_id")
+      .select("title, body, lead_id, action_path")
       .eq("id", notificationId)
       .maybeSingle(),
   ]);
@@ -98,7 +112,7 @@ async function deliverEmail(
         from,
         to: [email],
         subject: notificationResult.data.title,
-        text: `${notificationResult.data.body}\n\n${notificationResult.data.lead_id && appUrl ? `${appUrl}/leads/${notificationResult.data.lead_id}` : appUrl}`,
+        text: `${notificationResult.data.body}\n\n${notificationLink(appUrl, notificationResult.data)}`,
       }),
     });
     if (!response.ok)
@@ -110,6 +124,16 @@ async function deliverEmail(
   } catch {
     return { status: "failed", error: "email_provider_unreachable" };
   }
+}
+
+function notificationLink(
+  appUrl: string,
+  notification: { lead_id: string | null; action_path: string | null },
+) {
+  if (!appUrl) return "";
+  if (notification.action_path) return `${appUrl}${notification.action_path}`;
+  if (notification.lead_id) return `${appUrl}/leads/${notification.lead_id}`;
+  return appUrl;
 }
 
 function safeEqual(left: string, right: string) {

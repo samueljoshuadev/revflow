@@ -16,6 +16,15 @@ export type PropertyType =
 export type PropertyPurpose = "sale" | "rent";
 export type PropertyMatchStatus =
   "recommended" | "sent" | "favorite" | "rejected" | "visit_scheduled";
+export type DevelopmentUnitStatus =
+  | "available"
+  | "in_proposal"
+  | "reserved"
+  | "sold"
+  | "rented"
+  | "blocked";
+export type DevelopmentStage =
+  "pre_launch" | "launch" | "under_construction" | "ready";
 
 type Organization = {
   id: string;
@@ -34,6 +43,7 @@ type Organization = {
   booking_enabled: boolean;
   booking_duration_minutes: number;
   booking_buffer_minutes: number;
+  proposal_sla_hours: number;
   meeting_location: string | null;
   branding: Json;
   notification_settings: Json;
@@ -54,6 +64,7 @@ type OrganizationMember = {
   organization_id: string;
   user_id: string;
   role: OrganizationRole;
+  reports_to_user_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -222,6 +233,7 @@ type Notification = {
   title: string;
   body: string;
   dedupe_key: string;
+  action_path: string | null;
   read_at: string | null;
   created_at: string;
 };
@@ -357,6 +369,181 @@ type PropertyPhoto = {
   created_at: string;
 };
 
+type Development = {
+  id: string;
+  organization_id: string;
+  name: string;
+  developer_name: string | null;
+  stage: DevelopmentStage;
+  city: string;
+  neighborhood: string | null;
+  address: string | null;
+  delivery_date: string | null;
+  description: string | null;
+  financing_annual_rate: number | null;
+  financing_max_term_months: number | null;
+  financing_max_ltv: number | null;
+  income_commitment_limit: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+
+type DevelopmentTower = {
+  id: string;
+  organization_id: string;
+  development_id: string;
+  name: string;
+  position: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type DevelopmentUnit = {
+  id: string;
+  organization_id: string;
+  development_id: string;
+  tower_id: string | null;
+  code: string;
+  floor: number | null;
+  position: number;
+  typology: string | null;
+  bedrooms: number | null;
+  area_m2: number | null;
+  parking_spaces: number | null;
+  list_price: number;
+  status: DevelopmentUnitStatus;
+  status_changed_at: string;
+  status_changed_by: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PropertyProposalStatus =
+  | "draft"
+  | "queued"
+  | "in_review"
+  | "countered"
+  | "approved"
+  | "rejected"
+  | "expired"
+  | "cancelled";
+export type ProposalPartyRole = "buyer" | "spouse" | "co_buyer";
+export type MaritalStatus =
+  "single" | "married" | "stable_union" | "divorced" | "widowed";
+export type IncomeType =
+  "clt" | "pro_labore" | "self_employed" | "retired" | "other" | "none";
+export type ProposalDocumentType =
+  | "identity"
+  | "proof_of_residence"
+  | "civil_status_certificate"
+  | "income_proof"
+  | "other";
+
+type PartnerAgency = {
+  id: string;
+  organization_id: string;
+  name: string;
+  document: string | null;
+  creci: string | null;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+
+type PropertyProposal = {
+  id: string;
+  organization_id: string;
+  number: number;
+  unit_id: string;
+  lead_id: string | null;
+  broker_user_id: string | null;
+  manager_user_id: string | null;
+  director_user_id: string | null;
+  partner_agency_id: string | null;
+  external_broker_name: string | null;
+  external_broker_phone: string | null;
+  external_broker_creci: string | null;
+  status: PropertyProposalStatus;
+  queue_position: number | null;
+  list_price_snapshot: number;
+  offered_price: number;
+  down_payment: number;
+  fgts_amount: number;
+  financing_amount: number;
+  payment_notes: string | null;
+  notes: string | null;
+  submitted_at: string | null;
+  sla_due_at: string | null;
+  sla_breach_notified_at: string | null;
+  decided_at: string | null;
+  decided_by: string | null;
+  decision_note: string | null;
+  counter_offer_price: number | null;
+  cancelled_at: string | null;
+  cancel_reason: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type ProposalParty = {
+  id: string;
+  organization_id: string;
+  proposal_id: string;
+  role: ProposalPartyRole;
+  full_name: string;
+  cpf: string | null;
+  rg: string | null;
+  birth_date: string | null;
+  marital_status: MaritalStatus | null;
+  email: string | null;
+  phone: string | null;
+  occupation: string | null;
+  income_type: IncomeType | null;
+  gross_monthly_income: number | null;
+  address: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type ProposalDocument = {
+  id: string;
+  organization_id: string;
+  proposal_id: string;
+  party_id: string;
+  document_type: ProposalDocumentType;
+  storage_path: string;
+  file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  uploaded_by: string | null;
+  created_at: string;
+};
+
+export type DevelopmentOverviewRow = {
+  development_id: string;
+  total_units: number;
+  available_units: number;
+  in_proposal_units: number;
+  reserved_units: number;
+  sold_units: number;
+  rented_units: number;
+  blocked_units: number;
+  total_vgv: number;
+  sold_vgv: number;
+  available_vgv: number;
+};
+
 type RealEstateLeadProfile = {
   lead_id: string;
   organization_id: string;
@@ -393,7 +580,14 @@ type PropertyMatch = {
 type RealEstateEvent = {
   id: string;
   organization_id: string;
-  entity_type: "property" | "property_match" | "lead_profile" | "visit";
+  entity_type:
+    | "property"
+    | "property_match"
+    | "lead_profile"
+    | "visit"
+    | "development"
+    | "development_unit"
+    | "proposal";
   entity_id: string;
   actor_user_id: string | null;
   event_type: string;
@@ -660,6 +854,13 @@ export type Database = {
       real_estate_lead_profiles: Table<RealEstateLeadProfile>;
       property_matches: Table<PropertyMatch>;
       real_estate_events: Table<RealEstateEvent>;
+      developments: Table<Development>;
+      development_towers: Table<DevelopmentTower>;
+      development_units: Table<DevelopmentUnit>;
+      partner_agencies: Table<PartnerAgency>;
+      property_proposals: Table<PropertyProposal>;
+      proposal_parties: Table<ProposalParty>;
+      proposal_documents: Table<ProposalDocument>;
       clients: Table<Client>;
       proposals: Table<Proposal>;
       proposal_items: Table<ProposalItem>;
@@ -691,6 +892,85 @@ export type Database = {
       move_lead_stage: {
         Args: { p_lead_id: string; p_to_stage_id: string };
         Returns: Json;
+      };
+      create_property_proposal: {
+        Args: {
+          p_organization_id: string;
+          p_unit_id: string;
+          p_offered_price: number;
+          p_down_payment: number;
+          p_fgts_amount: number;
+          p_financing_amount: number;
+          p_payment_notes: string | null;
+          p_buyer_name: string;
+          p_buyer_phone: string | null;
+          p_buyer_email: string | null;
+          p_lead_id?: string | null;
+          p_partner_agency_id?: string | null;
+          p_external_broker_name?: string | null;
+          p_external_broker_phone?: string | null;
+          p_external_broker_creci?: string | null;
+        };
+        Returns: string;
+      };
+      update_property_proposal_terms: {
+        Args: {
+          p_organization_id: string;
+          p_proposal_id: string;
+          p_offered_price: number;
+          p_down_payment: number;
+          p_fgts_amount: number;
+          p_financing_amount: number;
+          p_payment_notes: string | null;
+          p_notes: string | null;
+        };
+        Returns: undefined;
+      };
+      submit_property_proposal: {
+        Args: { p_organization_id: string; p_proposal_id: string };
+        Returns: Json;
+      };
+      decide_property_proposal: {
+        Args: {
+          p_organization_id: string;
+          p_proposal_id: string;
+          p_decision: "approved" | "rejected" | "countered";
+          p_note?: string | null;
+          p_counter_offer_price?: number | null;
+        };
+        Returns: string;
+      };
+      cancel_property_proposal: {
+        Args: {
+          p_organization_id: string;
+          p_proposal_id: string;
+          p_reason?: string | null;
+        };
+        Returns: undefined;
+      };
+      process_proposal_deadlines: {
+        Args: { p_limit?: number };
+        Returns: Json;
+      };
+      get_proposal_missing_requirements: {
+        Args: { p_proposal_id: string };
+        Returns: string[];
+      };
+      get_unit_proposal_queue: {
+        Args: { p_organization_id: string; p_unit_id: string };
+        Returns: Json;
+      };
+      set_member_reports_to: {
+        Args: {
+          p_organization_id: string;
+          p_user_id: string;
+          p_reports_to_user_id: string | null;
+        };
+        Returns: undefined;
+      };
+      get_developments_overview: {
+        Args: { p_organization_id: string };
+        Returns: DevelopmentOverviewRow[];
       };
       get_dashboard_metrics: {
         Args: { p_organization_id: string };
@@ -931,6 +1211,7 @@ export type Database = {
       property_type: PropertyType;
       property_purpose: PropertyPurpose;
       property_match_status: PropertyMatchStatus;
+      development_unit_status: DevelopmentUnitStatus;
     };
     CompositeTypes: Record<string, never>;
   };
